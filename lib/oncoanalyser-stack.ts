@@ -8,7 +8,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 
 import * as common from './common'
-
+import {CfnOutput, CfnOutputProps} from "aws-cdk-lib";
 
 interface IPermissionsPrefixes {
   keyPattern: string,
@@ -23,15 +23,15 @@ interface IBucketPermissions {
 const bucketPermissionsSpecs: IBucketPermissions[] = [
 
   {
-    name: 'umccr-research-dev',
+    name: 'umccr-research-dev',  // FIXME - get from parameter store or as input
     prefixes: [
       { keyPattern: '*', action: 'r' },
-      { keyPattern: 'stephen/*', action: 'rw' },
+      { keyPattern: 'stephen/*', action: 'rw' }, // FIXME get from parameter store or as stack input
     ],
   },
 
   {
-    name: 'umccr-temp-dev',
+    name: 'umccr-temp-dev', // FIXME - get from parameter store
     prefixes: [
       { keyPattern: '*', action: 'rw' },
     ],
@@ -46,6 +46,9 @@ interface IOncoanalyserStackProps extends cdk.StackProps {
 
 
 export class OncoanalyserStack extends cdk.Stack {
+
+  public readonly roleBatchInstanceTaskName: CfnOutput;
+
   constructor(scope: Construct, id: string, props: IOncoanalyserStackProps) {
     super(scope, id, props);
 
@@ -130,6 +133,7 @@ export class OncoanalyserStack extends cdk.Stack {
     // Create job definition for pipeline execution
     new batchAlpha.JobDefinition(this, 'OncoanalyserJobDefinition', {
       container: {
+        // FIXME - pull from docker stack
         image: ecs.ContainerImage.fromRegistry('scwatts/oncoanalyser-awsbatch:0.0.6'),
         command: ['true'],
         memoryLimitMiB: 1000,
@@ -151,6 +155,11 @@ export class OncoanalyserStack extends cdk.Stack {
           },
         ],
       },
+    });
+
+    // Return the batch instance task arn as an output
+    this.roleBatchInstanceTaskName = new CfnOutput(this, "BatchInstanceTaskRoleArn", {
+      value: roleBatchInstanceTask.roleName,
     });
 
   }
