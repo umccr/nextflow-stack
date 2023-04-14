@@ -4,9 +4,10 @@ set -euo pipefail
 
 ## GLOBALS ##
 
-ICA_BASE_URL="https://aps2.platform.illumina.com"
-TEMPLATE_CONFIG_PATH="/root/oncoanalyser/assets/nextflow_aws.template.config"
+ICA_BASE_URL="https://aps2.platf1orm.illumina.com"
 MAIN_NF_PATH="software/oncoanalyser/main.nf"
+TEMPLATE_CONFIG_PATH="/root/oncoanalyser/assets/nextflow_aws.template.config"
+NEXTFLOW_CONFIG_PATH="nextflow.config"
 GENOME="GRCh38_umccr"
 
 ## END GLOBALS ##
@@ -236,11 +237,11 @@ get_hmf_refdata_from_ssm(){
   get_ssm_parameter_value "/oncoanalyser/reference_data/hmf"
 }
 
-get_hmf_virusbreakend_db_from_ssm(){
+get_virusbreakend_db_from_ssm(){
   get_ssm_parameter_value "/oncoanalyser/reference_data/virusbreakend"
 }
 
-get_hmf_genomes_path_from_ssm(){
+get_genomes_path_from_ssm(){
   get_ssm_parameter_value "/oncoanalyser/reference_data/genomes"
 }
 
@@ -248,13 +249,14 @@ get_batch_instance_role_name_from_ssm(){
   get_ssm_parameter_value "/oncoanalyser/iam/batch-instance-role-name"
 }
 
-
-get_ica_secrets_portal_provider_arn(){
-  aws lambda get-function \
-    --function-name "IcaSecretsPortalProvider" \
+get_ica_access_token_from_secrets_manager(){
+  aws secretsmanager get-secret-value \
+    --secret-id IcaSecretsPortal \
     --output json | \
   jq --raw-output \
-    '.Configuration | .FunctionArn'
+    '
+      .SecretString
+    '
 }
 
 get_batch_instance_role_arn(){
@@ -279,26 +281,32 @@ get_batch_instance_profile_name(){
     '
 }
 
-
-
 stage_gds_fp() {
-  gds_fp=${1}
-  gds_dp=${gds_fp%/*}/
+  local gds_fp="${1}"
+  local gds_dp="${gds_fp%/*}/"
+
+  # Local vars
+  local dst_bucket
+  local dst_key_base
+  local dst_dp
+  local dst_fp
+  local gds_volume_name
+  local gds_path
+  local gds_folder_id
+  local creds
+  local src_fp
+
 
   dst_bucket="$(get_dest_bucket_from_ssm)"
   dst_key_base="$(get_dest_prefix_from_ssm)"
 
-  dst_dp=${dst_bucket}/${dst_key_base}
-  dst_fp=${dst_dp}/${gds_fp##*/}
+  dst_dp="${dst_bucket}/${dst_key_base}"
+  dst_fp="${dst_dp}/${gds_fp##*/}"
 
   echo s3://${dst_fp}
 
   if [[ -z "${ICA_ACCESS_TOKEN:-}" ]]; then
-    AWS_REGION=ap-southeast-2 aws lambda invoke \
-      --function-name "$(get_ica_secrets_portal_provider_arn)" \
-      response.json 1>/dev/null
-
-    ICA_ACCESS_TOKEN="$(jq --raw-output < response.json)"
+    ICA_ACCESS_TOKEN="$(get_ica_access_token_from_secrets_manager)"
     export ICA_ACCESS_TOKEN
     shred -u response.json
   fi
@@ -333,7 +341,8 @@ stage_gds_fp() {
       --header "Content-Type: application/json-patch+json" \
       --url "${ICA_BASE_URL}/v1/folders/${gds_folder_id}?include=ObjectStoreAccess" \
       --data '{}' | \
-    jq --raw-output '.objectStoreAccess.awsS3TemporaryUploadCredentials'
+    jq --raw-output \
+      '.objectStoreAccess.awsS3TemporaryUploadCredentials' \
   )"
 
 
@@ -363,7 +372,7 @@ EOF
       <<< "${creds}" \
   )"
 
-  if [[ ${gds_fp} =~ .*bam$ ]]; then
+  if [[ "${gds_fp}" =~ .*bam$ ]]; then
     echo "staging ${gds_fp}.bai to s3://${dst_fp}.bai" 1>&2
     rclone copy --s3-upload-concurrency 8 \
       "ica:${src_fp}.bai" "aws:${dst_dp}/"
@@ -397,6 +406,15 @@ upload_data() {
 
 ## END FUNCTIONS ##
 
+## GET AWS REGION ##
+
+# Get the current aws region
+# https://stackoverflow.com/questions/4249488/find-region-from-within-an-ec2-instance
+AWS_REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/region)
+
+export AWS_REGION
+
+
 ## LOCAL EXECUTOR WORKAROUND ##
 
 # When Nextflow runs a job using the local executor with Docker enabled, I have configured behaviour such that that a
@@ -405,8 +423,6 @@ upload_data() {
 # non-permissive Nextflow pipeline role. This means to run Nextflow processes locally that can r/w to S3 (e.g. when
 # using Fusion, S3 output directory, etc), we must set the EC2 instance IAM role to a profile with such permissions.
 # Here I associate the instance with the OncoanalyserStack task role. There may be better approaches to achieve this.
-
-# NOTE(SW): this is to be updated manually for now until build process is placed into CodePipeline
 
 instance_id=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 association_id=$(
@@ -527,24 +543,20 @@ fi
 ## END NEXFLOW ARGS ##
 
 ## CREATE NEXTFLOW CONFIG ##
-nextflow_config_tmp="$( \
-  mktemp --suffix "nextflow.config"\
-)"
-
 sed \
   --regexp-extended \
   --expression \
     "
-      s#__S3_HMF_GENOMES_DATA_PATH__#$(get_hmf_genomes_path_from_ssm)#g;
+      s#__S3_GENOMES_DATA_PATH__#$(get_genomes_path_from_ssm)#g;
       s#__BATCH_INSTANCE_ROLE__#$(get_batch_instance_role_arn)#g
     " \
-  "${TEMPLATE_CONFIG_PATH}" > "${nextflow_config_tmp}"
+  "${TEMPLATE_CONFIG_PATH}" > "${NEXTFLOW_CONFIG_PATH}"
 
 ## END CREATE NEXTFLOW CONFIG ##
 trap upload_data EXIT
 
 nextflow \
-  -config "${nextflow_config_tmp}" \
+  -config "${NEXTFLOW_CONFIG_PATH}" \
   run "${MAIN_NF_PATH}" \
     -ansi-log "false" \
     -profile "docker" \
@@ -555,7 +567,7 @@ nextflow \
     --genome "${GENOME}" \
     ${nextflow_args} \
     --ref_data_hmf_data_path "$(get_hmf_refdata_from_ssm)" \
-    --ref_data_virusbreakenddb_path "$(get_hmf_virusbreakend_db_from_ssm)"
+    --ref_data_virusbreakenddb_path "$(get_virusbreakend_db_from_ssm)"
 
 # Upload data cleanly
 upload_data
