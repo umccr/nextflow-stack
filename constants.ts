@@ -45,18 +45,25 @@ export const NXF_STAGING_PREFIX_DEV = "stephen/gds_staging_dev"
 export const NXF_STAGING_PREFIX_STG = "stephen/gds_staging_dev"  // FIXME
 export const NXF_STAGING_PREFIX_PROD = "stephen/gds_staging_dev" // FIXME
 
-export const HMF_REFERENCE_DATA_PATH_DEV = "s3://umccr-research-dev/stephen/oncoanalyser_data/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/"
-export const HMF_REFERENCE_DATA_PATH_STG = "s3://umccr-research-dev/stephen/oncoanalyser_data/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/"  // FIXME
-export const HMF_REFERENCE_DATA_PATH_PROD = "s3://umccr-research-dev/stephen/oncoanalyser_data/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/" // FIXME
+export const NXF_REFDATA_BUCKET_DEV = "umccr-research-dev"
+export const NXF_REFDATA_BUCKET_STG = "umccr-research-staging"
+export const NXF_REFDATA_BUCKET_PROD = "umccr-research-prod"
 
-export const VIRUS_BREAKEND_DB_PATH_DEV = "s3://umccr-research-dev/stephen/oncoanalyser_data/virusbreakend/virusbreakenddb_20210401/"
-export const VIRUS_BREAKEND_DB_PATH_STG = "s3://umccr-research-dev/stephen/oncoanalyser_data/virusbreakend/virusbreakenddb_20210401/"  // FIXME
-export const VIRUS_BREAKEND_DB_PATH_PROD = "s3://umccr-research-dev/stephen/oncoanalyser_data/virusbreakend/virusbreakenddb_20210401/"  // FIXME
+export const NXF_REFDATA_PREFIX_DEV = "stephen/oncoanalyser_data/"
+export const NXF_REFDATA_PREFIX_STG = "stephen/oncoanalyser_data/"  // FIXME
+export const NXF_REFDATA_PREFIX_PROD = "stephen/oncoanalyser_data/"  // FIXME
 
-export const GENOMES_DATA_PATH_DEV = "s3://umccr-research-dev/stephen/oncoanalyser_data/genomes/"
-export const GENOMES_DATA_PATH_STG = "s3://umccr-research-dev/stephen/oncoanalyser_data/genomes/"  // FIXME
-export const GENOMES_DATA_PATH_PROD = "s3://umccr-research-dev/stephen/oncoanalyser_data/genomes/" // FIXME
+export const HMF_REFERENCE_DATA_PATH_DEV = `s3://${NXF_REFDATA_BUCKET_DEV}/${NXF_REFDATA_PREFIX_DEV}/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/`
+export const HMF_REFERENCE_DATA_PATH_STG = `s3://${NXF_REFDATA_BUCKET_STG}/${NXF_REFDATA_PREFIX_STG}/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/`  // FIXME
+export const HMF_REFERENCE_DATA_PATH_PROD = `s3://${NXF_REFDATA_BUCKET_PROD}/${NXF_REFDATA_PREFIX_PROD}/hmf_reference_data/repacks/5.32+dev1_38_0.0.1/` // FIXME
 
+export const VIRUS_BREAKEND_DB_PATH_DEV = `s3://${NXF_REFDATA_BUCKET_DEV}/${NXF_REFDATA_PREFIX_DEV}/virusbreakend/virusbreakenddb_20210401/`
+export const VIRUS_BREAKEND_DB_PATH_STG = `s3://${NXF_REFDATA_BUCKET_STG}/${NXF_REFDATA_PREFIX_STG}/virusbreakend/virusbreakenddb_20210401/`  // FIXME
+export const VIRUS_BREAKEND_DB_PATH_PROD = `s3://${NXF_REFDATA_BUCKET_PROD}/${NXF_REFDATA_PREFIX_PROD}/virusbreakend/virusbreakenddb_20210401/`  // FIXME
+
+export const GENOMES_DATA_PATH_DEV = `s3://${NXF_REFDATA_BUCKET_DEV}/${NXF_REFDATA_PREFIX_DEV}/genomes/`
+export const GENOMES_DATA_PATH_STG = `s3://${NXF_REFDATA_BUCKET_STG}/${NXF_REFDATA_PREFIX_STG}/genomes/`  // FIXME
+export const GENOMES_DATA_PATH_PROD = `s3://${NXF_REFDATA_BUCKET_PROD}/${NXF_REFDATA_PREFIX_PROD}/genomes/` // FIXME
 
 // SSM Parameters
 export const SSM_PARAMETERS = {

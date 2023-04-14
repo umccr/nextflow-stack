@@ -20,28 +20,14 @@ interface IBucketPermissions {
   prefixes: IPermissionsPrefixes[],
 }
 
-const bucketPermissionsSpecs: IBucketPermissions[] = [
-
-  {
-    name: 'umccr-research-dev',  // FIXME - get from parameter store or as input
-    prefixes: [
-      { keyPattern: '*', action: 'r' },
-      { keyPattern: 'stephen/*', action: 'rw' }, // FIXME get from parameter store or as stack input
-    ],
-  },
-
-  {
-    name: 'umccr-temp-dev', // FIXME - get from parameter store
-    prefixes: [
-      { keyPattern: '*', action: 'rw' },
-    ],
-  },
-
-]
-
-
 interface IOncoanalyserStackProps extends cdk.StackProps {
-    jobQueueTaskArns: Map<string, string>,
+  jobQueueTaskArns: Map<string, string>,
+  cache_bucket: string,
+  cache_prefix: string,
+  staging_bucket: string,
+  staging_prefix: string,
+  refdata_bucket: string,
+  refdata_prefix: string,
 }
 
 
@@ -119,16 +105,37 @@ export class OncoanalyserStack extends cdk.Stack {
     });
 
     // Grant stack-specific role permissions
-    for (let bucketPermissionsSpec of bucketPermissionsSpecs) {
+    const bucketPermissionsSpecs: IBucketPermissions[] = [
 
-      const bucket = s3.Bucket.fromBucketName(this, `OncoanalyserS3Bucket-${bucketPermissionsSpec.name}`,
-        bucketPermissionsSpec.name,
+      {
+        name: props.cache_bucket,
+        prefixes: [
+          { keyPattern: `${props.cache_prefix}/*`, action: 'rw' }
+        ],
+      },
+      {
+        name: props.staging_bucket,
+        prefixes: [
+          { keyPattern: `${props.staging_prefix}/*`, action: 'rw' }
+        ],
+      },
+      {
+        name: props.refdata_bucket,
+        prefixes: [
+          { keyPattern: `${props.refdata_prefix}/*`, action: 'r' }
+        ],
+      },
+
+    ]
+
+
+    bucketPermissionsSpecs.forEach((bucketPermissionsSpec, index) => {
+      const bucket = s3.Bucket.fromBucketName(this, `OncoanalyserS3Bucket-${bucketPermissionsSpec.name}-${index}`,
+          bucketPermissionsSpec.name,
       );
-
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstancePipeline);
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstanceTask);
-    }
-
+    });
 
     // Create job definition for pipeline execution
     new batchAlpha.JobDefinition(this, 'OncoanalyserJobDefinition', {

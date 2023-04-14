@@ -8,7 +8,13 @@ import { SharedStack } from '../lib/shared-stack';
 import {
   AWS_ENV_DEV,
   AWS_ENV_BUILD,
-  SSM_PARAMETERS
+  SSM_PARAMETERS,
+  NXF_CACHE_BUCKET_DEV,
+  NXF_CACHE_PREFIX_DEV,
+  NXF_STAGING_BUCKET_DEV,
+  NXF_STAGING_PREFIX_DEV,
+  NXF_REFDATA_BUCKET_DEV,
+  NXF_REFDATA_PREFIX_DEV
 } from '../constants';
 import {NextflowApplicationStack} from "../lib/application-stack";
 import {NextflowBuildPipelineStack} from "../lib/pipeline-stack";
@@ -25,7 +31,13 @@ const dev_dockerbuild_stack = new DockerBuildStack(app, "DockerDevStack", {
 const dev_application_stack = new NextflowApplicationStack(app, 'NextflowApplicationDevStack', {
   env: AWS_ENV_DEV,
   stack_name: "NextflowStack",
-  ssm_parameters: SSM_PARAMETERS["DEV"]
+  ssm_parameters: SSM_PARAMETERS["DEV"],
+  cache_bucket: NXF_CACHE_BUCKET_DEV,
+  cache_prefix: NXF_CACHE_PREFIX_DEV,
+  staging_bucket: NXF_STAGING_BUCKET_DEV,
+  staging_prefix: NXF_STAGING_PREFIX_DEV,
+  refdata_bucket: NXF_REFDATA_BUCKET_DEV,
+  refdata_prefix: NXF_REFDATA_PREFIX_DEV,
 });
 
 const build_pipeline_stack = new NextflowBuildPipelineStack(app, "NextflowBuildPipelineStack", {

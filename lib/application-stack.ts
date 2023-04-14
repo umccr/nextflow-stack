@@ -8,7 +8,13 @@ import {StringParameter} from "aws-cdk-lib/aws-ssm";
 
 interface NextflowApplicationBuildStackProps extends StackProps {
     env: Environment,
-    stack_name: string
+    stack_name: string,
+    cache_bucket: string,
+    cache_prefix: string,
+    staging_bucket: string,
+    staging_prefix: string,
+    refdata_bucket: string,
+    refdata_prefix: string,
     ssm_parameters: Map<string, string>
 }
 
@@ -28,6 +34,12 @@ export class NextflowApplicationStack extends Stack {
         const oncoanalyser = new OncoanalyserStack(this, 'OncoanalyserStack', {
             jobQueueTaskArns: shared.jobQueueTaskArns,
             env: props.env,
+            cache_bucket: props.cache_bucket,
+            cache_prefix: props.cache_prefix,
+            staging_bucket: props.staging_bucket,
+            staging_prefix: props.staging_prefix,
+            refdata_bucket: props.refdata_bucket,
+            refdata_prefix: props.refdata_prefix
         });
 
         // Add tags
@@ -61,6 +73,12 @@ export class NextflowApplicationStack extends Stack {
 interface NextflowApplicationBuildStageProps extends StackProps {
     env: Environment,
     stack_name: string,
+    cache_bucket: string,
+    cache_prefix: string,
+    staging_bucket: string,
+    staging_prefix: string,
+    refdata_bucket: string,
+    refdata_prefix: string,
     ssm_parameters: Map<string, string>
 }
 

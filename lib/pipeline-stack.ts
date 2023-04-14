@@ -14,6 +14,18 @@ import {
     AWS_ENV_BUILD,
     AWS_ENV_PROD,
     AWS_ENV_STG,
+    NXF_CACHE_BUCKET_STG,
+    NXF_CACHE_BUCKET_PROD,
+    NXF_CACHE_PREFIX_STG,
+    NXF_CACHE_PREFIX_PROD,
+    NXF_REFDATA_BUCKET_STG,
+    NXF_REFDATA_BUCKET_PROD,
+    NXF_REFDATA_PREFIX_STG,
+    NXF_REFDATA_PREFIX_PROD,
+    NXF_STAGING_BUCKET_STG,
+    NXF_STAGING_BUCKET_PROD,
+    NXF_STAGING_PREFIX_STG,
+    NXF_STAGING_PREFIX_PROD,
     SSM_PARAMETERS
 } from "../constants";
 import {DockerBuildStage} from "./docker-build-stack";
@@ -118,6 +130,12 @@ export class NextflowBuildPipelineStack extends Stack {
             const stgStage = new NextflowApplicationBuildStage(this, "BuildStg", {
                 env: AWS_ENV_STG,
                 stack_name: "oncoanalyser",
+                cache_bucket: NXF_CACHE_BUCKET_STG,
+                cache_prefix: NXF_CACHE_PREFIX_STG,
+                staging_bucket: NXF_STAGING_BUCKET_STG,
+                staging_prefix: NXF_STAGING_PREFIX_STG,
+                refdata_bucket: NXF_REFDATA_BUCKET_STG,
+                refdata_prefix: NXF_REFDATA_PREFIX_STG,
                 ssm_parameters: SSM_PARAMETERS["STG"]
             });
 
@@ -129,6 +147,12 @@ export class NextflowBuildPipelineStack extends Stack {
             const prodStage = new NextflowApplicationBuildStage(this, "BuildProd", {
                 env: AWS_ENV_PROD,
                 stack_name: "oncoanalyser",
+                cache_bucket: NXF_CACHE_BUCKET_PROD,
+                cache_prefix: NXF_CACHE_PREFIX_PROD,
+                staging_bucket: NXF_STAGING_BUCKET_PROD,
+                staging_prefix: NXF_STAGING_PREFIX_PROD,
+                refdata_bucket: NXF_REFDATA_BUCKET_PROD,
+                refdata_prefix: NXF_REFDATA_PREFIX_PROD,
                 ssm_parameters: SSM_PARAMETERS["PROD"]
             });
 
