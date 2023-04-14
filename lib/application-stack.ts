@@ -77,4 +77,3 @@ export class NextflowApplicationBuildStage extends Stage {
         Tags.of(application_stack).add("Stack", props.stack_name);
     }
 }
-
