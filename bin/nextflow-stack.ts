@@ -13,7 +13,7 @@ import {
   NXF_CACHE_PREFIX_DEV,
   NXF_STAGING_BUCKET_DEV,
   NXF_STAGING_PREFIX_DEV,
-  NXF_REFDATA_BUCKET_DEV,
+  REFDATA_BUCKET_DEV,
   NXF_REFDATA_PREFIX_DEV
 } from '../constants';
 import {NextflowApplicationStack} from "../lib/application-stack";
@@ -36,7 +36,7 @@ const dev_application_stack = new NextflowApplicationStack(app, 'NextflowApplica
   cache_prefix: NXF_CACHE_PREFIX_DEV,
   staging_bucket: NXF_STAGING_BUCKET_DEV,
   staging_prefix: NXF_STAGING_PREFIX_DEV,
-  refdata_bucket: NXF_REFDATA_BUCKET_DEV,
+  refdata_bucket: REFDATA_BUCKET_DEV,
   refdata_prefix: NXF_REFDATA_PREFIX_DEV,
 });
 

@@ -18,8 +18,8 @@ import {
     NXF_CACHE_BUCKET_PROD,
     NXF_CACHE_PREFIX_STG,
     NXF_CACHE_PREFIX_PROD,
-    NXF_REFDATA_BUCKET_STG,
-    NXF_REFDATA_BUCKET_PROD,
+    REFDATA_BUCKET_STG,
+    REFDATA_BUCKET_PROD,
     NXF_REFDATA_PREFIX_STG,
     NXF_REFDATA_PREFIX_PROD,
     NXF_STAGING_BUCKET_STG,
@@ -134,7 +134,7 @@ export class NextflowBuildPipelineStack extends Stack {
                 cache_prefix: NXF_CACHE_PREFIX_STG,
                 staging_bucket: NXF_STAGING_BUCKET_STG,
                 staging_prefix: NXF_STAGING_PREFIX_STG,
-                refdata_bucket: NXF_REFDATA_BUCKET_STG,
+                refdata_bucket: REFDATA_BUCKET_STG,
                 refdata_prefix: NXF_REFDATA_PREFIX_STG,
                 ssm_parameters: SSM_PARAMETERS["STG"]
             });
@@ -151,7 +151,7 @@ export class NextflowBuildPipelineStack extends Stack {
                 cache_prefix: NXF_CACHE_PREFIX_PROD,
                 staging_bucket: NXF_STAGING_BUCKET_PROD,
                 staging_prefix: NXF_STAGING_PREFIX_PROD,
-                refdata_bucket: NXF_REFDATA_BUCKET_PROD,
+                refdata_bucket: REFDATA_BUCKET_PROD,
                 refdata_prefix: NXF_REFDATA_PREFIX_PROD,
                 ssm_parameters: SSM_PARAMETERS["PROD"]
             });
