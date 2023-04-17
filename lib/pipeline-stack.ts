@@ -6,7 +6,7 @@ import {StringParameter} from "aws-cdk-lib/aws-ssm";
 
 import {Effect, PolicyStatement} from "aws-cdk-lib/aws-iam";
 
-import {LinuxBuildImage} from "aws-cdk-lib/aws-codebuild";
+import {ComputeType, LinuxBuildImage} from "aws-cdk-lib/aws-codebuild";
 
 import * as moment from 'moment';
 
@@ -14,18 +14,18 @@ import {
     AWS_ENV_BUILD,
     AWS_ENV_PROD,
     AWS_ENV_STG,
-    NXF_CACHE_BUCKET_STG,
     NXF_CACHE_BUCKET_PROD,
-    NXF_CACHE_PREFIX_STG,
+    NXF_CACHE_BUCKET_STG,
     NXF_CACHE_PREFIX_PROD,
-    REFDATA_BUCKET_STG,
-    REFDATA_BUCKET_PROD,
-    NXF_REFDATA_PREFIX_STG,
+    NXF_CACHE_PREFIX_STG,
     NXF_REFDATA_PREFIX_PROD,
-    NXF_STAGING_BUCKET_STG,
+    NXF_REFDATA_PREFIX_STG,
     NXF_STAGING_BUCKET_PROD,
-    NXF_STAGING_PREFIX_STG,
+    NXF_STAGING_BUCKET_STG,
     NXF_STAGING_PREFIX_PROD,
+    NXF_STAGING_PREFIX_STG,
+    REFDATA_BUCKET_PROD,
+    REFDATA_BUCKET_STG,
     SSM_PARAMETERS
 } from "../constants";
 import {DockerBuildStage} from "./docker-build-stack";
