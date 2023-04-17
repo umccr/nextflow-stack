@@ -94,6 +94,7 @@ export class NextflowBuildPipelineStack extends Stack {
             codeBuildDefaults: {
                 buildEnvironment: {
                     buildImage: LinuxBuildImage.STANDARD_6_0,
+                    computeType: ComputeType.LARGE
                 },
                 // we need to give the codebuild engines permissions to assume a role in DEV - in order that they
                 // can invoke the tests - we don't know the name of the role yet (as it is built by CDK) - so we
