@@ -1,14 +1,12 @@
 import { Construct } from 'constructs';
 
-import * as batchAlpha from '@aws-cdk/aws-batch-alpha';
-import * as cdk from 'aws-cdk-lib';
-import * as ecs from 'aws-cdk-lib/aws-ecs';
-import * as iam from 'aws-cdk-lib/aws-iam';
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
-
 import * as common from './common'
-import {CfnOutput, CfnOutputProps} from "aws-cdk-lib";
+import {CfnOutput, Stack, StackProps} from "aws-cdk-lib";
+import {JobDefinition} from "@aws-cdk/aws-batch-alpha";
+import { ContainerImage } from 'aws-cdk-lib/aws-ecs';
+import {CfnInstanceProfile, IRole, Policy, PolicyStatement} from "aws-cdk-lib/aws-iam";
+import {Bucket, IBucket} from "aws-cdk-lib/aws-s3";
+import {StringParameter} from "aws-cdk-lib/aws-ssm";
 
 interface IPermissionsPrefixes {
   keyPattern: string,
@@ -20,7 +18,7 @@ interface IBucketPermissions {
   prefixes: IPermissionsPrefixes[],
 }
 
-interface IOncoanalyserStackProps extends cdk.StackProps {
+interface IOncoanalyserStackProps extends StackProps {
   jobQueueTaskArns: Map<string, string>,
   cache_bucket: string,
   cache_prefix: string,
@@ -31,7 +29,7 @@ interface IOncoanalyserStackProps extends cdk.StackProps {
 }
 
 
-export class OncoanalyserStack extends cdk.Stack {
+export class OncoanalyserStack extends Stack {
 
   public readonly roleBatchInstanceTaskName: CfnOutput;
 
@@ -62,51 +60,57 @@ export class OncoanalyserStack extends cdk.Stack {
       jobQueueArns: jobQueueTaskArnsArray,
     });
 
-    roleBatchInstancePipeline.attachInlinePolicy(new iam.Policy(this, 'OncoanalyserPipelinePolicyPassRole', {
-      statements: [
-        new iam.PolicyStatement({
-          actions: ['iam:PassRole'],
-          resources: [roleBatchInstanceTask.roleArn],
-      })],
-    }));
-
-    roleBatchInstancePipeline.attachInlinePolicy(new iam.Policy(this, 'OncoanalyserPipelinePolicySetInstanceRole', {
-      statements: [
-        new iam.PolicyStatement({
-          actions: [
-              'ec2:DescribeIamInstanceProfileAssociations',
-              // NOTE(SW): this /only/ allows passing the OncoanalyserStack task role, which is set above
-              'ec2:ReplaceIamInstanceProfileAssociation',
+    roleBatchInstancePipeline.attachInlinePolicy(
+        new Policy(this, 'OncoanalyserPipelinePolicyPassRole', {
+          statements: [
+            new PolicyStatement({
+              actions: ['iam:PassRole'],
+              resources: [roleBatchInstanceTask.roleArn],
+            })
           ],
-          resources: ['*'],
-      })],
-    }));
+        })
+    );
 
-    // TODO(SW): must replace above secret with an statement that provides the equivalent (for dev only; prod deploy
-    // should just use token from SecretManager):
-    //{
-    //  "Version": "2012-10-17",
-    //  "Statement": [
-    //      {
-    //          "Sid": "VisualEditor0",
-    //          "Effect": "Allow",
-    //          "Action": "lambda:InvokeFunction",
-    //          "Resource": "arn:aws:lambda:ap-southeast-2:472057503814:function:IcaSecretsPortalProvider"
-    //      }
-    //  ]
-    //}
+    roleBatchInstancePipeline.attachInlinePolicy(
+        new Policy(this, 'OncoanalyserPipelinePolicySetInstanceRole', {
+          statements: [
+            new PolicyStatement({
+              actions: [
+                'ec2:DescribeIamInstanceProfileAssociations',
+                // NOTE(SW): this /only/ allows passing the OncoanalyserStack task role, which is set above
+                'ec2:ReplaceIamInstanceProfileAssociation',
+              ],
+              resources: ['*'],
+            })
+          ],
+        })
+    );
 
-    const profileBatchInstanceTask = new iam.CfnInstanceProfile(this, 'OncoanalyserTaskBatchInstanceProfile', {
+    roleBatchInstancePipeline.attachInlinePolicy(
+        new Policy(this, 'OncoanalyserPipelinePolicyGetIcaSecretsPortal', {
+          statements: [
+            new PolicyStatement({
+              actions: [
+                "secretsmanager:GetSecretValue"
+              ],
+              resources: [
+                `arn:aws:secretsmanager:${this.region}:${this.account}:secret:IcaSecretsPortal`
+              ]
+            })
+          ]
+        })
+    )
+
+    const profileBatchInstanceTask = new CfnInstanceProfile(this, 'OncoanalyserTaskBatchInstanceProfile', {
       roles: [roleBatchInstanceTask.roleName],
     });
     // NOTE(SW): create a profile for manually launched EC2 instances; unclear if otherwise required
-    const profileBatchInstancePipeline = new iam.CfnInstanceProfile(this, 'OncoanalyserPipelineBatchInstanceProfile', {
+    const profileBatchInstancePipeline = new CfnInstanceProfile(this, 'OncoanalyserPipelineBatchInstanceProfile', {
       roles: [roleBatchInstancePipeline.roleName],
     });
 
     // Grant stack-specific role permissions
     const bucketPermissionsSpecs: IBucketPermissions[] = [
-
       {
         name: props.cache_bucket,
         prefixes: [
@@ -124,25 +128,27 @@ export class OncoanalyserStack extends cdk.Stack {
         prefixes: [
           { keyPattern: `${props.refdata_prefix}/*`, action: 'r' }
         ],
-      },
-
+      }
     ]
 
-
     bucketPermissionsSpecs.forEach((bucketPermissionsSpec, index) => {
-      const bucket = s3.Bucket.fromBucketName(this, `OncoanalyserS3Bucket-${bucketPermissionsSpec.name}-${index}`,
+      const bucket = Bucket.fromBucketName(this, `OncoanalyserS3Bucket-${bucketPermissionsSpec.name}-${index}`,
           bucketPermissionsSpec.name,
       );
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstancePipeline);
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstanceTask);
     });
 
+    // Set the docker image
+    const docker_tag = StringParameter.valueForStringParameter(
+        this, '/oncoanalyser/docker/tag'
+    )
+
     // Create job definition for pipeline execution
-    new batchAlpha.JobDefinition(this, 'OncoanalyserJobDefinition', {
+    new JobDefinition(this, 'OncoanalyserJobDefinition', {
       container: {
-        // FIXME - pull from docker stack
-        image: ecs.ContainerImage.fromRegistry('scwatts/oncoanalyser-awsbatch:0.0.6'),
-        command: ['true'],
+        image: ContainerImage.fromRegistry(docker_tag),
+        command: ["/root/oncoanalyser/assets/run.sh"],
         memoryLimitMiB: 1000,
         vcpus: 1,
         jobRole: roleBatchInstancePipeline,
@@ -171,7 +177,7 @@ export class OncoanalyserStack extends cdk.Stack {
 
   }
 
-  grantS3BucketPermissions(bpSpec: IBucketPermissions, bucket: s3.IBucket, jobRole: iam.IRole) {
+  grantS3BucketPermissions(bpSpec: IBucketPermissions, bucket: IBucket, jobRole: IRole) {
     for (let prefixData of bpSpec.prefixes) {
       switch (prefixData.action) {
         case 'r':

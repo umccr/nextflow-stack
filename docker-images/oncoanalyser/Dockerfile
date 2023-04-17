@@ -72,6 +72,9 @@ RUN \
 COPY assets/nextflow_aws.template.config /root/oncoanalyser/assets/
 COPY assets/run.sh /root/oncoanalyser/assets/
 
+RUN \
+  chmod +x "/root/oncoanalyser/assets/run.sh"
+
 WORKDIR /root/oncoanalyser/
 
 # Required for non-interactive shell execution i.e. docker run <image>:<tag> nextflow
