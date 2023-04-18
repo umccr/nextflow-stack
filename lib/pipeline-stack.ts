@@ -53,7 +53,7 @@ export class NextflowBuildPipelineStack extends Stack {
             "codestar_github_arn"
         );
 
-        const input_source = pipelines.CodePipelineSource.connection("umccr/nextflow-stack", "pipeline-test", {
+        const input_source = pipelines.CodePipelineSource.connection("umccr/nextflow-stack", "main", {
             connectionArn: codeStarArn,
             codeBuildCloneOutput: true
         })
