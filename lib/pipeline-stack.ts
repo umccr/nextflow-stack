@@ -119,7 +119,7 @@ export class NextflowBuildPipelineStack extends Stack {
             stack_name: "oncoanalyser",
             // See https://github.com/aws/aws-cdk/issues/20643#issuecomment-1219565988 for more info as to how this works
             // Also inspired by https://stackoverflow.com/questions/74979993/how-do-i-obtain-exposed-variables-from-codebuild-in-the-cdk
-            tag: tag_date + "--" + process.env.CODEBUILD_SOURCE_VERSION
+            tag: tag_date + "--" + process.env.CODEBUILD_RESOLVED_SOURCE_VERSION
         })
 
         // Add Docker stage to pipeline
