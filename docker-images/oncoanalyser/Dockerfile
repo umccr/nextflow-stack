@@ -6,8 +6,8 @@ ARG NEXTFLOW_PATH="/opt/nextflow"
 
 # Set jq version
 ARG JQ_VERSION="1.6"
-ARG RCLONE_VERSION="1.53.3"
-ARG PARALLEL_VERSION="20161222"
+ARG RCLONE_VERSION="1.62.2"
+ARG PARALLEL_VERSION="20230322"
 ARG OPEN_JDK_VERSION="17.0.6"
 
 # Set container versions
@@ -36,8 +36,6 @@ RUN \
   apt update -y -q && \
   apt install -y \
     jq="${JQ_VERSION}*" \
-    parallel="${PARALLEL_VERSION}*" \
-    rclone="${RCLONE_VERSION}*" \
     openjdk-17-jre="${OPEN_JDK_VERSION}*" && \
   apt clean -y -q
 
@@ -72,12 +70,20 @@ RUN \
     ./aws/install && \
     rm -rf aws/ "awscli.zip"
 
+# Install rclone and parallel via conda
+# Need a later version of parallel to prevent escape of tilda characters in chunk below
+# Debian rclone version is also quite old
+RUN \
+  conda install --yes \
+    rclone="${RCLONE_VERSION}" \
+    parallel="${PARALLEL_VERSION}"
+
 # Install docker-through-docker
 RUN \
   mkdir -p "docker_install_temp/" && \
   ( \
     cd "docker_install_temp/" && \
-    parallel -j0 eval " \
+    parallel -j0 " \
         wget \
           --quiet \
           'https://download.docker.com/linux/debian/dists/bullseye/pool/stable/amd64/{}' \
