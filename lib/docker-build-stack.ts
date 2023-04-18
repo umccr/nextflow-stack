@@ -22,8 +22,7 @@ import {
 
 interface IDockerBuildStackProps extends StackProps {
     env: Environment
-    tag_date: string
-    commit_id: string
+    tag: string
 }
 
 // The Docker Build Stack deploys
@@ -41,7 +40,7 @@ export class DockerBuildStack extends Stack {
             directory: pathjoin(__dirname, '../', 'docker-images', 'oncoanalyser'),
         });
 
-        const docker_dest = new DockerImageName(`${props.env.account}.dkr.ecr.${props.env.region}.amazonaws.com/oncoanalyser:${props.tag_date}--${props.commit_id}`)
+        const docker_dest = new DockerImageName(`${props.env.account}.dkr.ecr.${props.env.region}.amazonaws.com/oncoanalyser:${props.tag}`)
 
         new ECRDeployment(this, 'DeployDockerImage', {
             src: new DockerImageName(image.imageUri),
@@ -57,8 +56,7 @@ export class DockerBuildStack extends Stack {
 
 interface DockerBuildStageProps extends StackProps {
     env: Environment,
-    tag_date: string,
-    commit_id: string
+    tag: string,
     stack_name: string
 }
 

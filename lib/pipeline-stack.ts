@@ -1,4 +1,4 @@
-import {CfnOutput, Environment, pipelines, Stack, StackProps} from "aws-cdk-lib";
+import {Environment, pipelines, Stack, StackProps} from "aws-cdk-lib";
 
 import {Construct} from "constructs";
 
