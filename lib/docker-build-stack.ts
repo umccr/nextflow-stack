@@ -51,16 +51,6 @@ export class DockerBuildStack extends Stack {
             value: docker_dest.uri,
         });
 
-        // Add in ssm parameters for batch instance role name
-        new StringParameter(
-            this,
-            `ssm-parameter-docker-tag`,
-            {
-                parameterName: "/oncoanalyser/docker/tag",
-                stringValue: docker_dest.toString()
-            }
-        )
-
     }
 }
 
@@ -72,6 +62,8 @@ interface DockerBuildStageProps extends StackProps {
 
 export class DockerBuildStage extends Stage {
 
+    public readonly dockerTag: CfnOutput;
+
     constructor(
         scope: Construct,
         id: string,
@@ -82,5 +74,7 @@ export class DockerBuildStage extends Stage {
         const docker_build_stack = new DockerBuildStack(this, "DockerBuild", props);
 
         Tags.of(docker_build_stack).add("Stack", props.stack_name);
+
+        this.dockerTag = docker_build_stack.dockerTag
     }
 }

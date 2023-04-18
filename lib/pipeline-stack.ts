@@ -114,7 +114,7 @@ export class NextflowBuildPipelineStack extends Stack {
         // Build docker image (shared stack between staging and dev)
         const tag_date = (moment(new Date())).format('YYYYMMDDHHmmSS')
 
-        const commit_id = <string>process.env.CODEBUILD_RESOLVED_SOURCE_VERSION
+        const commit_id = process.env.CODEBUILD_RESOLVED_SOURCE_VERSION || "latest"
 
         const dockerStage = new DockerBuildStage(this, "BuildDockerImage", {
             env: AWS_ENV_BUILD,
@@ -123,6 +123,8 @@ export class NextflowBuildPipelineStack extends Stack {
             // Also inspired by https://stackoverflow.com/questions/74979993/how-do-i-obtain-exposed-variables-from-codebuild-in-the-cdk
             tag: tag_date + "--" + commit_id.substring(0, 8)
         })
+
+        const docker_tag = dockerStage.dockerTag.toString()
 
         // Add Docker stage to pipeline
         pipeline.addStage(
@@ -134,6 +136,7 @@ export class NextflowBuildPipelineStack extends Stack {
             // Testing coming
             const stgStage = new NextflowApplicationBuildStage(this, "BuildStg", {
                 env: AWS_ENV_STG,
+                docker_tag: docker_tag,
                 stack_name: "oncoanalyser",
                 cache_bucket: NXF_CACHE_BUCKET_STG,
                 cache_prefix: NXF_CACHE_PREFIX_STG,
@@ -151,6 +154,7 @@ export class NextflowBuildPipelineStack extends Stack {
         {
             const prodStage = new NextflowApplicationBuildStage(this, "BuildProd", {
                 env: AWS_ENV_PROD,
+                docker_tag: docker_tag,
                 stack_name: "oncoanalyser",
                 cache_bucket: NXF_CACHE_BUCKET_PROD,
                 cache_prefix: NXF_CACHE_PREFIX_PROD,

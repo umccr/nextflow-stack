@@ -20,7 +20,6 @@ import {DockerBuildStack} from "../lib/docker-build-stack";
 const app = new App()
 
 
-
 const dev_dockerbuild_stack = new DockerBuildStack(app, "DockerDevStack", {
   env: AWS_ENV_DEV,
   stackName: "DockerBuild",
