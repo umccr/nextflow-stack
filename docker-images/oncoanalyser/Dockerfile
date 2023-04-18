@@ -77,7 +77,7 @@ RUN \
   mkdir -p "docker_install_temp/" && \
   ( \
     cd "docker_install_temp/" && \
-    parallel -j0 " \
+    parallel -j0 eval " \
         wget \
           --quiet \
           'https://download.docker.com/linux/debian/dists/bullseye/pool/stable/amd64/{}' \
