@@ -114,14 +114,15 @@ export class NextflowBuildPipelineStack extends Stack {
         // Build docker image (shared stack between staging and dev)
         const tag_date = (moment(new Date())).format('YYYYMMDDHHmmSS')
 
-        const commit_id = process.env.CODEBUILD_RESOLVED_SOURCE_VERSION || "latest"
+        // Collect the commit id (use 'latest' if running synth locally)
+        const commit_id = (process.env.CODEBUILD_RESOLVED_SOURCE_VERSION || "latest").substring(0, 8)
 
         const dockerStage = new DockerBuildStage(this, "BuildDockerImage", {
             env: AWS_ENV_BUILD,
             stack_name: "oncoanalyser",
             // See https://github.com/aws/aws-cdk/issues/20643#issuecomment-1219565988 for more info as to how this works
             // Also inspired by https://stackoverflow.com/questions/74979993/how-do-i-obtain-exposed-variables-from-codebuild-in-the-cdk
-            tag: tag_date + "--" + commit_id.substring(0, 8)
+            tag: tag_date + "--" + commit_id
         })
 
         const docker_tag = dockerStage.dockerTag.toString()
