@@ -1,12 +1,18 @@
-import { Construct } from 'constructs';
+import {Construct} from 'constructs';
 
-import * as common from './common'
-import {CfnOutput, Stack, StackProps} from "aws-cdk-lib";
+import {
+  Environment,
+  Stack,
+  StackProps,
+} from "aws-cdk-lib";
 import {JobDefinition} from "@aws-cdk/aws-batch-alpha";
-import { ContainerImage } from 'aws-cdk-lib/aws-ecs';
 import {CfnInstanceProfile, IRole, Policy, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {Bucket, IBucket} from "aws-cdk-lib/aws-s3";
 import {StringParameter} from "aws-cdk-lib/aws-ssm";
+
+import {DockerImageBuildStack} from "../common";
+import {getRoleBatchInstanceTask, getBaseBatchInstancePipelineRole} from "../../base-roles";
+
 
 interface IPermissionsPrefixes {
   keyPattern: string,
@@ -18,34 +24,44 @@ interface IBucketPermissions {
   prefixes: IPermissionsPrefixes[],
 }
 
-interface IOncoanalyserStackProps extends StackProps {
+interface IStarAlignNfStackProps extends StackProps {
+  env: Environment,
+  envBuild: Environment,
+  workflowName: string,
+  dockerTag?: string,
   jobQueueTaskArns: Map<string, string>,
   cache_bucket: string,
   cache_prefix: string,
   staging_bucket: string,
   staging_prefix: string,
+  output_bucket: string,
+  output_prefix: string,
   refdata_bucket: string,
   refdata_prefix: string,
 }
 
+export class StarAlignNfStack extends Stack {
 
-export class OncoanalyserStack extends Stack {
-
-  public readonly roleBatchInstanceTaskName: CfnOutput;
-
-  constructor(scope: Construct, id: string, props: IOncoanalyserStackProps) {
+  constructor(scope: Construct, id: string, props: IStarAlignNfStackProps) {
     super(scope, id, props);
 
+    // Create Docker image and deploy
+    const dockerStack = new DockerImageBuildStack(this, `DockerImageBuildStack-${props.workflowName}`, {
+      env: props.envBuild,
+      workflowName: props.workflowName,
+      dockerTag: props.dockerTag,
+    });
+
     // Task role
-    const roleBatchInstanceTask = common.getRoleBatchInstanceTask({
+    const roleBatchInstanceTask = getRoleBatchInstanceTask({
       context: this,
-      namePrefix: 'Oncoanalyser',
+      namePrefix: 'StarAlignNf',
     });
 
     // Pipeline role; grant the follow in addition to base permissions:
     //
     //  * iam:PassRole
-    //     - role ID: OncoanalyserTaskBatchInstanceRole
+    //     - role ID: StarAlignNfTaskBatchInstanceRole
     //     - Nextflow requirement for Batch job submission
     //
     //  * ec2:DescribeIamInstanceProfileAssociations
@@ -54,58 +70,58 @@ export class OncoanalyserStack extends Stack {
     //     - usually need at least S3 write permissions hence require setting the correct role to inherit at runtime
     //
     const jobQueueTaskArnsArray = Array.from(props.jobQueueTaskArns.values());
-    const roleBatchInstancePipeline = common.getBaseBatchInstancePipelineRole({
+    const roleBatchInstancePipeline = getBaseBatchInstancePipelineRole({
       context: this,
-      namePrefix: 'Oncoanalyser',
+      namePrefix: 'StarAlignNf',
       jobQueueArns: jobQueueTaskArnsArray,
     });
 
     roleBatchInstancePipeline.attachInlinePolicy(
-        new Policy(this, 'OncoanalyserPipelinePolicyPassRole', {
-          statements: [
-            new PolicyStatement({
-              actions: ['iam:PassRole'],
-              resources: [roleBatchInstanceTask.roleArn],
-            })
-          ],
-        })
+      new Policy(this, 'StarAlignNfPipelinePolicyPassRole', {
+        statements: [
+          new PolicyStatement({
+            actions: ['iam:PassRole'],
+            resources: [roleBatchInstanceTask.roleArn],
+          })
+        ],
+      })
     );
 
     roleBatchInstancePipeline.attachInlinePolicy(
-        new Policy(this, 'OncoanalyserPipelinePolicySetInstanceRole', {
-          statements: [
-            new PolicyStatement({
-              actions: [
-                'ec2:DescribeIamInstanceProfileAssociations',
-                // NOTE(SW): this /only/ allows passing the OncoanalyserStack task role, which is set above
-                'ec2:ReplaceIamInstanceProfileAssociation',
-              ],
-              resources: ['*'],
-            })
-          ],
-        })
+      new Policy(this, 'StarAlignNfPipelinePolicySetInstanceRole', {
+        statements: [
+          new PolicyStatement({
+            actions: [
+              'ec2:DescribeIamInstanceProfileAssociations',
+              // NOTE(SW): this /only/ allows passing the StarAlignNfStack task role, which is set above
+              'ec2:ReplaceIamInstanceProfileAssociation',
+            ],
+            resources: ['*'],
+          })
+        ],
+      })
     );
 
     roleBatchInstancePipeline.attachInlinePolicy(
-        new Policy(this, 'OncoanalyserPipelinePolicyGetIcaSecretsPortal', {
-          statements: [
-            new PolicyStatement({
-              actions: [
-                "secretsmanager:GetSecretValue"
-              ],
-              resources: [
-                `arn:aws:secretsmanager:${this.region}:${this.account}:secret:IcaSecretsPortal`
-              ]
-            })
-          ]
-        })
+      new Policy(this, 'StarAlignNfPipelinePolicyGetIcaSecretsPortal', {
+        statements: [
+          new PolicyStatement({
+            actions: [
+              "secretsmanager:GetSecretValue"
+            ],
+            resources: [
+              `arn:aws:secretsmanager:${this.region}:${this.account}:secret:IcaSecretsPortal`
+            ]
+          })
+        ]
+      })
     )
 
-    const profileBatchInstanceTask = new CfnInstanceProfile(this, 'OncoanalyserTaskBatchInstanceProfile', {
+    const profileBatchInstanceTask = new CfnInstanceProfile(this, 'StarAlignNfTaskBatchInstanceProfile', {
       roles: [roleBatchInstanceTask.roleName],
     });
     // NOTE(SW): create a profile for manually launched EC2 instances; unclear if otherwise required
-    const profileBatchInstancePipeline = new CfnInstanceProfile(this, 'OncoanalyserPipelineBatchInstanceProfile', {
+    const profileBatchInstancePipeline = new CfnInstanceProfile(this, 'StarAlignNfPipelineBatchInstanceProfile', {
       roles: [roleBatchInstancePipeline.roleName],
     });
 
@@ -124,6 +140,12 @@ export class OncoanalyserStack extends Stack {
         ],
       },
       {
+        name: props.output_bucket,
+        prefixes: [
+          { keyPattern: `${props.output_prefix}/*`, action: 'rw' }
+        ],
+      },
+      {
         name: props.refdata_bucket,
         prefixes: [
           { keyPattern: `${props.refdata_prefix}/*`, action: 'r' }
@@ -132,23 +154,18 @@ export class OncoanalyserStack extends Stack {
     ]
 
     bucketPermissionsSpecs.forEach((bucketPermissionsSpec, index) => {
-      const bucket = Bucket.fromBucketName(this, `OncoanalyserS3Bucket-${bucketPermissionsSpec.name}-${index}`,
+      const bucket = Bucket.fromBucketName(this, `StarAlignNfS3Bucket-${bucketPermissionsSpec.name}-${index}`,
           bucketPermissionsSpec.name,
       );
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstancePipeline);
       this.grantS3BucketPermissions(bucketPermissionsSpec, bucket, roleBatchInstanceTask);
     });
 
-    // Set the docker image
-    const docker_tag = StringParameter.valueForStringParameter(
-        this, '/oncoanalyser/docker/tag'
-    )
-
     // Create job definition for pipeline execution
-    new JobDefinition(this, 'OncoanalyserJobDefinition', {
+    new JobDefinition(this, 'StarAlignNfJobDefinition', {
       container: {
-        image: ContainerImage.fromRegistry(docker_tag),
-        command: ["/root/oncoanalyser/assets/run.sh"],
+        image: dockerStack.image,
+        command: ['true'],
         memoryLimitMiB: 1000,
         vcpus: 1,
         jobRole: roleBatchInstancePipeline,
@@ -170,11 +187,15 @@ export class OncoanalyserStack extends Stack {
       },
     });
 
-    // Return the batch instance task arn as an output
-    this.roleBatchInstanceTaskName = new CfnOutput(this, "BatchInstanceTaskRoleArn", {
-      value: roleBatchInstanceTask.roleName,
+    // Add SSM parameters for Batch task role and profile ARN
+    new StringParameter(this, 'SsmParameter-star_align_nf-batch_task_instance_role', {
+      parameterName: `/nextflow_stack/${props.workflowName}/batch_task_instance_role_arn`,
+      stringValue: roleBatchInstanceTask.roleArn,
     });
-
+    new StringParameter(this, 'SsmParameter-star_align_nf-batch_task_instance_profile', {
+      parameterName: `/nextflow_stack/${props.workflowName}/batch_task_instance_profile_arn`,
+      stringValue: profileBatchInstanceTask.attrArn,
+    });
   }
 
   grantS3BucketPermissions(bpSpec: IBucketPermissions, bucket: IBucket, jobRole: IRole) {
@@ -195,3 +216,4 @@ export class OncoanalyserStack extends Stack {
     }
   }
 }
+
