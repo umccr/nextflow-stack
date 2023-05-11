@@ -341,7 +341,7 @@ EOF
   src_fp="$( \
     jq --raw-output \
       --arg gds_fp "${gds_fp##*/}" \
-      '\(.bucketName)/\(.keyPrefix)\($gds_fp)' \
+      '"\(.bucketName)/\(.keyPrefix)\($gds_fp)"' \
       <<< "${creds}" \
   )"
 
