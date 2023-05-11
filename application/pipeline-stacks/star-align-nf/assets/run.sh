@@ -151,7 +151,6 @@ stage_gds_fp() {
   if [[ -z "${ICA_ACCESS_TOKEN:-}" ]]; then
     ICA_ACCESS_TOKEN="$(get_ica_access_token_from_secrets_manager)"
     export ICA_ACCESS_TOKEN
-    shred -u response.json
   fi
 
   # Get gds folder id from data path
