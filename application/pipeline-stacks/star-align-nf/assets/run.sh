@@ -291,7 +291,7 @@ done
 
 cat <<EOF > samplesheet.csv
 sample_id,fastq_fwd,fastq_rev
-${sample_id},${fastq_fwd},${fastq_rev}
+${sample_id},${input_fps['fastq_fwd']},${input_fps['fastq_rev']}
 EOF
 
 ## END SAMPLESHEET PREP ##
