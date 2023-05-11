@@ -166,7 +166,7 @@ stage_gds_fp() {
       --request "GET" \
       --header "Accept: application/json" \
       --header "Authorization: Bearer ${ICA_ACCESS_TOKEN}" \
-      --url "https://aps2.platf1orm.illumina.com/v1/folders?volume.name=${gds_volume_name}&path=${gds_path}" | \
+      --url "https://aps2.platform.illumina.com/v1/folders?volume.name=${gds_volume_name}&path=${gds_path}" | \
     jq --raw-output \
       '
         .items |
@@ -182,7 +182,7 @@ stage_gds_fp() {
       --header 'Accept: application/json' \
       --header "Authorization: Bearer ${ICA_ACCESS_TOKEN}" \
       --header "Content-Type: application/json-patch+json" \
-      --url "https://aps2.platf1orm.illumina.com/v1/folders/${gds_folder_id}?include=ObjectStoreAccess" \
+      --url "https://aps2.platform.illumina.com/v1/folders/${gds_folder_id}?include=ObjectStoreAccess" \
       --data '{}' | \
     jq --raw-output \
       '.objectStoreAccess.awsS3TemporaryUploadCredentials' \
