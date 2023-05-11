@@ -9,6 +9,7 @@ import {JobDefinition} from "@aws-cdk/aws-batch-alpha";
 import {CfnInstanceProfile, IRole, Policy, PolicyStatement} from "aws-cdk-lib/aws-iam";
 import {Bucket, IBucket} from "aws-cdk-lib/aws-s3";
 import {StringParameter} from "aws-cdk-lib/aws-ssm";
+import {Secret} from "aws-cdk-lib/aws-secretsmanager";
 
 import {DockerImageBuildStack} from "../common";
 import {getRoleBatchInstanceTask, getBaseBatchInstancePipelineRole} from "../../base-roles";
@@ -102,20 +103,8 @@ export class OncoanalyserStack extends Stack {
       })
     );
 
-    roleBatchInstancePipeline.attachInlinePolicy(
-      new Policy(this, 'OncoanalyserPipelinePolicyGetIcaSecretsPortal', {
-        statements: [
-          new PolicyStatement({
-            actions: [
-              "secretsmanager:GetSecretValue"
-            ],
-            resources: [
-              `arn:aws:secretsmanager:${this.region}:${this.account}:secret:IcaSecretsPortal`
-            ]
-          })
-        ]
-      })
-    )
+    const icaSecret = Secret.fromSecretNameV2(this, `IcaSecret-${props.workflowName}`, "IcaSecretsPortal");
+    icaSecret.grantRead(roleBatchInstancePipeline);
 
     const profileBatchInstanceTask = new CfnInstanceProfile(this, 'OncoanalyserTaskBatchInstanceProfile', {
       roles: [roleBatchInstanceTask.roleName],
