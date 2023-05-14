@@ -499,7 +499,9 @@ if [[ ${mode} == 'wgs' ]]; then
 elif [[ ${mode} == 'wts' ]]; then
   nextflow_args='--mode manual --processes_include isofox,cuppa'
 elif [[ ${mode} == 'wgts' ]]; then
-  :
+  : '
+  pass
+  '
 elif [[ ${mode} == 'wgts_existing_wts' ]]; then
   nextflow_args='--processes_exclude isofox'
 elif [[ ${mode} == 'wgts_existing_wgs' ]]; then
