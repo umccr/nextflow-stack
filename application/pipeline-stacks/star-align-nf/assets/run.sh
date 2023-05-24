@@ -101,15 +101,15 @@ get_ssm_parameter_value(){
 }
 
 get_nf_bucket_name_from_ssm() {
-  get_ssm_parameter_value "/nextflow_stack/oncoanalyser/nf_bucket_name"
+  get_ssm_parameter_value "/nextflow_stack/star-align-nf/nf_bucket_name"
 }
 
 get_nf_bucket_temp_prefix_from_ssm() {
-  get_ssm_parameter_value "/nextflow_stack/oncoanalyser/nf_bucket_temp_prefix"
+  get_ssm_parameter_value "/nextflow_stack/star-align-nf/nf_bucket_temp_prefix"
 }
 
 get_nf_bucket_output_prefix_from_ssm() {
-  get_ssm_parameter_value "/nextflow_stack/oncoanalyser/nf_bucket_output_prefix"
+  get_ssm_parameter_value "/nextflow_stack/star-align-nf/nf_bucket_output_prefix"
 }
 
 get_batch_instance_role_arn_from_ssm(){
