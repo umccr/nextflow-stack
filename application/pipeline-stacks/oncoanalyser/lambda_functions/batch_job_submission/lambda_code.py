@@ -43,7 +43,9 @@ def main(event, context):
 
     LOGGER.info(f'Received event: {json.dumps(event)}')
 
-    validate_event_data(event)
+    validate_response = validate_event_data(event)
+    if validate_response['returncode'] != 0:
+        return validate_response['message']
 
     job_data = get_job_data(event)
 
@@ -161,17 +163,14 @@ def validate_event_data(event):
     )
 
     if not (mode := event.get('mode')):
-        log_error_and_return('Missing parameter: \'mode\'')
+        return get_error_response('Missing required parameter: mode')
     elif mode not in modes_allowed:
         modes_allowed_str = ', '.join(modes_allowed)
-        message = (
-            f'Received an unexpected \'mode\' value, {mode}. Available modes are:'
-            f'{modes_allowed_str}'
-        )
-        log_error_and_return(message)
-
+        message = f'Received an unexpected mode: {mode}. Available modes are: {modes_allowed_str}'
+        return get_error_response(message)
 
     required_params = [
+        'mode',
         'portal_id',
         'subject_id',
     ]
@@ -215,12 +214,23 @@ def validate_event_data(event):
     else:
         assert False
 
-    for required_param in required_params:
-        if required_param not in event:
-            log_error_and_return(f'Missing required parameter: {required_param}')
+    missing_params = set(required_params) - set(event)
+    if missing_params:
+        plurality = 'parameters' if len(missing_params) > 1 else 'parameter'
+        message = f'Missing required {plurality}: {", ".join(missing_params)}'
+        return get_error_response(message)
+
+    extra_params = set(event) - set(required_params)
+    if extra_params:
+        plurality = 'parameters' if len(extra_params) > 1 else 'parameter'
+        message = f'Found unexpected {plurality}: {", ".join(extra_params)}'
+        return get_error_response(message)
+
+    return {'returncode': 0, 'message': dict()}
 
 
-def log_error_and_return(message):
+def get_error_response(message):
 
     LOGGER.error(message)
-    return {'statusCode': 400, 'body': json.dumps(message)}
+    message_response = {'statusCode': 400, 'body': json.dumps(message)}
+    return {'returncode': 1, 'message': message_response}
