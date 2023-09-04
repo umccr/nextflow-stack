@@ -62,6 +62,10 @@ def main(event, context):
                 {'type': 'VCPU', 'value': '2'},
             ],
         },
+        parameters={
+            'portal_run_id': event['portal_run_id'],
+            'subject_id': event['subject_id'],
+        },
     )
 
     LOGGER.info(f'Received job submission response: {response_job}')
