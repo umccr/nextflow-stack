@@ -56,7 +56,8 @@ def main(event, context):
         },
         parameters={
             'portal_run_id': event['portal_run_id'],
-            'subject_id': event['subject_id'],
+            'workflow': 'star_alignment',
+            'version': get_ssm_parameter_value('/nextflow_stack/star-align-nf/pipeline_version_tag'),
         },
     )
 

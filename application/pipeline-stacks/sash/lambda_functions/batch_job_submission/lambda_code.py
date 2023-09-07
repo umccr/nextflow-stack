@@ -59,7 +59,8 @@ def main(event, context):
         },
         parameters={
             'portal_run_id': event['portal_run_id'],
-            'subject_id': event['subject_id'],
+            'workflow': 'sash',
+            'version': get_ssm_parameter_value('/nextflow_stack/sash/pipeline_version_tag'),
         },
     )
 

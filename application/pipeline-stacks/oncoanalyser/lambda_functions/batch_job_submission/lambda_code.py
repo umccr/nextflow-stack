@@ -64,7 +64,8 @@ def main(event, context):
         },
         parameters={
             'portal_run_id': event['portal_run_id'],
-            'subject_id': event['subject_id'],
+            'workflow': f'oncoanalyser_{event["mode"]}',
+            'version': get_ssm_parameter_value('/nextflow_stack/oncoanalyser/pipeline_version_tag'),
         },
     )
 
