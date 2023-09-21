@@ -347,4 +347,3 @@ rm -rf /tmp/awscliv2.zip /tmp/aws/ /tmp/amazon-ebs-autoscale/
   return [computeEnvironment, jobQueue];
   }
 }
-
