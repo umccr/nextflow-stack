@@ -87,6 +87,9 @@ export function getRoleBatchInstanceTask(args: { context: Stack, workflowName: s
     ],
   });
 
+  // TODO(SW): restrict instances this applies to using a condition with some stack-specific value
+  // such as instance name (NextflowApplication*), instance profile (defined in stack) or some
+  // other tag. Some condition keys: ec2:Attribute/${n}, ec2:ResourceTag/${n}, ec2:InstanceProfile
   new Policy(args.context, `TaskPolicyEbsAutoScale-${args.workflowName}`, {
     roles: [roleTask],
     statements: [new PolicyStatement({
