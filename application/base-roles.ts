@@ -75,7 +75,7 @@ export function createPipelineRoles(args: { context: Stack, workflowName: string
 }
 
 export function getRoleBatchInstanceTask(args: { context: Stack, workflowName: string }) {
-  return new Role(args.context, `TaskBatchInstanceRole-${args.workflowName}`, {
+  const roleTask = new Role(args.context, `TaskBatchInstanceRole-${args.workflowName}`, {
     assumedBy: new CompositePrincipal(
       new ServicePrincipal('ec2.amazonaws.com'),
       new ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -86,6 +86,26 @@ export function getRoleBatchInstanceTask(args: { context: Stack, workflowName: s
       ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonEC2ContainerServiceforEC2Role'),
     ],
   });
+
+  new Policy(args.context, `TaskPolicyEbsAutoScale-${args.workflowName}`, {
+    roles: [roleTask],
+    statements: [new PolicyStatement({
+      actions: [
+        'ec2:AttachVolume',
+        'ec2:CreateTags',
+        'ec2:CreateVolume',
+        'ec2:DeleteVolume',
+        'ec2:DescribeTags',
+        'ec2:DescribeVolumeAttribute',
+        'ec2:DescribeVolumeStatus',
+        'ec2:DescribeVolumes',
+        'ec2:ModifyInstanceAttribute',
+      ],
+      resources: ['*'],
+    })],
+  });
+
+  return roleTask;
 }
 
 export function getBaseBatchInstancePipelineRole(args: { context: Stack, workflowName: string, jobQueueArns: string[] }) {
