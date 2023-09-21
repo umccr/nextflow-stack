@@ -41,7 +41,7 @@ const batchComputePipeline: IBatchComputeData = {
   name: 'pipeline',
   costModel: ComputeResourceType.ON_DEMAND,
   instances: [
-   'r5n.large',
+   'r6i.large',
   ],
 };
 
