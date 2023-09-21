@@ -225,18 +225,21 @@ export class BasePipelineStack extends Stack {
 
 
   getLaunchTemplateSpec(args: { namespace: string, volumeSize: number }) {
-    // NOTE(SW): using UserData.addCommands does not render with a MIME block when passed to the
-    // batch-alpha.ComputeEnvironment, which then results in an invalid compute environment
 
     // Required packages for Amazon Elastic Block Store Autoscale set in the Cloud Config block
 
-    // NOTE(SW): The AWS CLIv2 install must not clobber Docker paths otherwise they are mounted over
+    // NOTE(SW): The AWS CLIv2 install must not clobber Docker paths otherwise the corresponding
+    // paths in the Docker container will be mounted over. The Amazon Elastic Block Store Autoscale
+    // install and daemon also require AWS CLIv2 to be in path, so I symlink it into /usr/local/bin
+
+    // NOTE(SW): using UserData.addCommands does not render with a MIME block when passed to the
+    // batch-alpha.ComputeEnvironment, which then results in an invalid compute environment
 
     const userDataTask = UserData.custom(
 `MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="==MYBOUNDARY=="
+Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 
---==MYBOUNDARY==
+--==BOUNDARY==
 Content-Type: text/cloud-config; charset="us-ascii"
 
 packages:
@@ -248,7 +251,7 @@ packages:
   - unzip
   - wget
 
---==MYBOUNDARY==
+--==BOUNDARY==
 Content-Type: text/x-shellscript; charset="us-ascii"
 
 #!/bin/bash
@@ -262,7 +265,7 @@ git clone -b v2.4.7 https://github.com/awslabs/amazon-ebs-autoscale /tmp/amazon-
 bash /tmp/amazon-ebs-autoscale/install.sh --initial-size 20
 
 rm -rf /tmp/awscliv2.zip /tmp/aws/ /tmp/amazon-ebs-autoscale/
---==MYBOUNDARY==--`
+--==BOUNDARY==--`
     );
 
     return new LaunchTemplate(this, `${args.namespace}LaunchTemplate`, {
