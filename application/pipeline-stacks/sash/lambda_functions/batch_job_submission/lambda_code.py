@@ -128,7 +128,7 @@ def get_job_command(event):
     output_scratch_dir = get_output_scratch_dir(event['subject_id'], event['portal_run_id'])
     output_staging_dir = get_output_staging_dir(event['subject_id'], event['portal_run_id'])
 
-    oncoanalyser_dir = pathlib.Path(event['oncoanalyser_dir']) / f'{event["subject_id"]}_{event["tumor_sample_id"]}'
+    oncoanalyser_dir = event['oncoanalyser_dir'].rstrip('/') + f'/{event["subject_id"]}_{event["tumor_sample_id"]}/'
 
     command_components = [
         './assets/run.sh',

@@ -182,7 +182,7 @@ def get_job_command(event):
         command_components.append(f'--existing_wgs_dir {get_wgs_existing_dir(event)}')
     elif event["mode"] == 'wgts_existing_wts':
         command_components.extend(command_components_wgts)
-        command_components.append(f'--existing_wts_dir {get_wts_existing_dir(event)]}')
+        command_components.append(f'--existing_wts_dir {get_wts_existing_dir(event)}')
     elif event["mode"] == 'wgts_existing_both':
         command_components.extend(command_components_wgts)
         command_components.append(f'--existing_wgs_dir {get_wgs_existing_dir(event)}')
@@ -194,11 +194,11 @@ def get_job_command(event):
 
 
 def get_wgs_existing_dir(event):
-    return pathlib.Path(event['existing_wgs_dir']) / f'{event["subject_id"]}_{event["tumor_wgs_sample_id"]}'
+    return event['existing_wgs_dir'].rstrip('/') + f'/{event["subject_id"]}_{event["tumor_wgs_sample_id"]}/'
 
 
 def get_wts_existing_dir(event):
-    return pathlib.Path(event['existing_wts_dir']) / f'{event["subject_id"]}_{event["tumor_wts_sample_id"]}'
+    return event['existing_wts_dir'].rstrip('/') + f'/{event["subject_id"]}_{event["tumor_wts_sample_id"]}/'
 
 
 def validate_event_data(event):
