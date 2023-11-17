@@ -77,7 +77,7 @@ def get_job_data(event):
 
     job_name = f'star-align-nf__{event["subject_id"]}__{event["library_id"]}__{event["portal_run_id"]}'
     job_definition_arn = get_ssm_parameter_value('/nextflow_stack/star-align-nf/batch_job_definition_arn')
-    job_queue_name = 'nextflow-pipeline-ondemand-nvme_ssd'
+    job_queue_name = 'nextflow-pipeline'
 
     command = get_job_command(event)
 

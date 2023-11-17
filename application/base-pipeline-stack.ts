@@ -127,26 +127,37 @@ export class BasePipelineStack extends cdk.Stack {
       roles: [roleBatchInstance.roleName],
     });
 
-    for (let storageType of args.storageTypes) {
-      const launchTemplate = this.getLaunchTemplateSpec({
-        namespace: 'BasePipeline',
-        storageType: storageType,
-      });
 
-      let [computeEnvironment, jobQueue] = this.getComputeEnvironment({
-        queueData: batchQueues.pipelineQueue,
-        queueType: constants.QueueType.Ondemand,
-        storageType: storageType,
-        vpc: args.vpc,
-        securityGroup: args.securityGroup,
-        launchTemplate: launchTemplate,
-        profileBatchInstance: profileBatchInstance,
-        serviceType: constants.ServiceType.Pipeline,
-      });
+    // NOTE(SW): here we make a special cases for the pipeline queue in the UMCCR environment. This exception is
+    // designed to met existing compatibility requirements for the external orchestrator service (single queue, constant
+    // queue name) while allowing runs with and without FusionFS. This is done by:
+    //   (1) creating a single pipeline queue with a predefined constant name
+    //   (2) forcing the pipeline queue storage type to 'NvmeSsdOnly' for FusionFS compatibility
+    //
+    // One side-effect here is that pipelines that do not use FusionFS will be run on instance with NVMe SSD but not
+    // utilise that resource.
+    const queueName = constants.PIPELINE_BATCH_QUEUE_BASENAME;
+    const storageType = constants.InstanceStorageType.NvmeSsdOnly;
 
-      this.jobQueuePipelineArns.push(jobQueue.jobQueueArn);
 
-    }
+    const launchTemplate = this.getLaunchTemplateSpec({
+      namespace: 'BasePipeline',
+      storageType: storageType,
+    });
+
+    const [computeEnvironment, jobQueue] = this.getComputeEnvironment({
+      queueData: batchQueues.pipelineQueue,
+      queueType: constants.QueueType.Ondemand,
+      storageType: storageType,
+      vpc: args.vpc,
+      securityGroup: args.securityGroup,
+      launchTemplate: launchTemplate,
+      profileBatchInstance: profileBatchInstance,
+      serviceType: constants.ServiceType.Pipeline,
+      queueName: queueName,
+    });
+
+    this.jobQueuePipelineArns.push(jobQueue.jobQueueArn);
   }
 
 
@@ -211,6 +222,7 @@ export class BasePipelineStack extends cdk.Stack {
     profileBatchInstance: iam.CfnInstanceProfile,
     roleBatchSpotfleet?: iam.Role,
     serviceType: constants.ServiceType,
+    queueName?: string,
   }): [batchAlpha.ComputeEnvironment, batchAlpha.JobQueue] {
 
     let queueDataInstanceTypeKey: string;
@@ -249,12 +261,17 @@ export class BasePipelineStack extends cdk.Stack {
         throw new Error('Got bad queue type');
     }
 
-    const queueName = batchQueues.getQueueName({
-      queueBaseName: args.queueData.name,
-      queueType: args.queueType,
-      storageType: args.storageType,
-      serviceType: args.serviceType,
-    });
+    let queueName: string;
+    if (args.queueName) {
+      queueName = args.queueName;
+    } else {
+      queueName = batchQueues.getQueueName({
+        queueBaseName: args.queueData.name,
+        queueType: args.queueType,
+        storageType: args.storageType,
+        serviceType: args.serviceType,
+      });
+    }
 
     const computeEnvId = `BaseComputeEnvironment-${queueName}`;
     const computeEnvironment = new batchAlpha.ComputeEnvironment(this, computeEnvId, {
