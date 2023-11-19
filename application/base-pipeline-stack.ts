@@ -128,14 +128,14 @@ export class BasePipelineStack extends cdk.Stack {
     });
 
 
-    // NOTE(SW): here we make a special cases for the pipeline queue in the UMCCR environment. This exception is
-    // designed to met existing compatibility requirements for the external orchestrator service (single queue, constant
-    // queue name) while allowing runs with and without FusionFS. This is done by:
+    // NOTE(SW): here we make a special case for the pipeline queue in the UMCCR environment. This exception is designed
+    // to met existing compatibility requirements for the external orchestrator service (single queue, constant queue
+    // name) while allowing runs with and without FusionFS. This is done by:
     //   (1) creating a single pipeline queue with a predefined constant name
     //   (2) forcing the pipeline queue storage type to 'NvmeSsdOnly' for FusionFS compatibility
     //
-    // One side-effect here is that pipelines that do not use FusionFS will be run on instance with NVMe SSD but not
-    // utilise that resource.
+    // One side-effect of this is that pipelines not using FusionFS will still be run on instance with NVMe SSD but
+    // won't utilise that resource.
     const queueName = constants.PIPELINE_BATCH_QUEUE_BASENAME;
     const storageType = constants.InstanceStorageType.NvmeSsdOnly;
 
