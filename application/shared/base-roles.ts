@@ -66,6 +66,7 @@ export function createPipelineRoles(args: { context: cdk.Stack, workflowName: st
     }
 }
 
+
 export function getRoleBatchInstanceTask(args: { context: cdk.Stack, workflowName: string }) {
   const roleTask = new iam.Role(args.context, `TaskBatchInstanceRole-${args.workflowName}`, {
     assumedBy: new iam.CompositePrincipal(
@@ -102,6 +103,7 @@ export function getRoleBatchInstanceTask(args: { context: cdk.Stack, workflowNam
 
   return roleTask;
 }
+
 
 export function getBaseBatchInstancePipelineRole(args: { context: cdk.Stack, workflowName: string, jobQueueArns: string[] }) {
 

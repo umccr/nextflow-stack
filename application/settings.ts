@@ -15,7 +15,6 @@ export const maxvCpusDefault = 128;
 
 
 class Shared {
-
   constructor(public envName: string, public workflowName: string) {};
 
   getNfBucket() {
@@ -43,12 +42,10 @@ class Shared {
       [`/nextflow_stack/${this.workflowName}/nf_bucket_output_prefix`, this.getS3Data().get('nfPrefixOutput')!],
     ]);
   }
-
 }
 
 
 export class StarAlignNf extends Shared {
-
   readonly versionTag = 'v0.1.0'
 
   getS3Data() {
@@ -65,12 +62,10 @@ export class StarAlignNf extends Shared {
       [`/nextflow_stack/${this.workflowName}/pipeline_version_tag`, this.versionTag],
     ]);
   }
-
 }
 
 
 export class Oncoanalyser extends Shared {
-
   readonly versionTag = 'v0.1.3';
 
   getS3Data() {
@@ -91,12 +86,10 @@ export class Oncoanalyser extends Shared {
       [`/nextflow_stack/${this.workflowName}/pipeline_version_tag`, this.versionTag],
     ]);
   }
-
 }
 
 
 export class Sash extends Shared {
-
   readonly versionTag = "v0.1.12";
 
   getSsmParameters() {
@@ -106,5 +99,4 @@ export class Sash extends Shared {
       [`/nextflow_stack/${this.workflowName}/pipeline_version_tag`, this.versionTag],
     ]);
   }
-
 }

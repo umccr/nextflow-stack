@@ -50,7 +50,6 @@ export class BasePipelineStack extends cdk.Stack {
 
   }
 
-
   createTaskResources(args: {
     queueTypes: constants.QueueType[],
     storageTypes: constants.InstanceStorageType[],
@@ -104,12 +103,10 @@ export class BasePipelineStack extends cdk.Stack {
           });
 
           this.jobQueueTaskArns.push(jobQueue.jobQueueArn);
-
         }
       }
     }
   }
-
 
   createPipelineResources(args: {
     storageTypes: constants.InstanceStorageType[],
@@ -160,7 +157,6 @@ export class BasePipelineStack extends cdk.Stack {
     this.jobQueuePipelineArns.push(jobQueue.jobQueueArn);
   }
 
-
   getLaunchTemplateSpec(args: {
     namespace: string,
     storageType: constants.InstanceStorageType,
@@ -210,7 +206,6 @@ export class BasePipelineStack extends cdk.Stack {
 
     return launchTemplate;
   }
-
 
   getComputeEnvironment(args: {
     queueData: batchQueues.IQueueData,
@@ -306,5 +301,4 @@ export class BasePipelineStack extends cdk.Stack {
 
     return [computeEnvironment, jobQueue];
   }
-
 }

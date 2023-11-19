@@ -23,6 +23,7 @@ interface IBuildStack extends IApplicationBuildStackProps {
   jobQueueTaskArns: string[];
 }
 
+
 export class ApplicationStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: IApplicationBuildStackProps) {
     super(scope, id, props);
@@ -107,6 +108,7 @@ export class ApplicationStack extends cdk.Stack {
     cdk.Tags.of(pipelineStack).add('Stack', 'StarAlignNfStack');
   }
 }
+
 
 export class ApplicationBuildStage extends cdk.Stage {
   constructor(scope: Construct, id: string, props: IApplicationBuildStackProps) {

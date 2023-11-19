@@ -40,8 +40,8 @@ export interface IPipelineStack extends cdk.StackProps {
   ssmParameters: Map<string, string>;
 }
 
-export class PipelineStack extends cdk.Stack {
 
+export class PipelineStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: IPipelineStack) {
     super(scope, id, props);
 
@@ -163,6 +163,7 @@ export class PipelineStack extends cdk.Stack {
     }
   }
 }
+
 
 export class DockerImageBuildStack extends cdk.Stack {
   public readonly image: ecs.EcrImage;

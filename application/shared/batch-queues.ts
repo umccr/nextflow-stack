@@ -32,6 +32,7 @@ export interface IQueueData {
   maxvCpus?: number;
 }
 
+
 export const pipelineQueue : IQueueData = {
   name: 'pipeline',
   instances: new Map([
