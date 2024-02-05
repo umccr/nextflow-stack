@@ -68,7 +68,7 @@ def main(event, context):
         },
         tags=[
             {'key': 'Stack', 'value': 'NextflowStack'},
-            {'key': 'SubStack', 'value': 'StarAlign'},
+            {'key': 'SubStack', 'value': 'star-align-nf'},
             {'key': 'RunId', 'value': event['portal_run_id']}
         ],
         propagateTags=True
