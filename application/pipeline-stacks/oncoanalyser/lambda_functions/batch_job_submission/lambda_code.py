@@ -77,7 +77,8 @@ def main(event, context):
         },
         tags=[
             {'key': 'Stack', 'value': 'NextflowStack'},
-            {'key': 'SubStack', 'value': 'OncoAnalyser'}
+            {'key': 'SubStack', 'value': 'OncoAnalyser'},
+            {'key': 'RunId', 'value': event['portal_run_id']}
         ],
         propagateTags=True
     )
