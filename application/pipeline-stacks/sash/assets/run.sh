@@ -20,6 +20,8 @@ Usage example: run.sh --portal_run_id STR --subject_id STR --tumor_sample_id STR
 Options:
   --portal_run_id STR           Portal run id
 
+  --subject_id STR              Subject id
+
   --tumor_sample_id STR         Tumor WGS sample id
   --tumor_library_id STR        Tumor WGS library id
 

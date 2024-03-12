@@ -8,6 +8,8 @@ Usage example: run.sh --portal_run_id STR --subject_id STR --sample_id STR --lib
 Options:
   --portal_run_id STR           Portal run id
 
+  --subject_id STR              Subject id
+
   --sample_id STR               Tumor WTS sample identifier
   --library_id STR              Tumor WTS library identifier
 

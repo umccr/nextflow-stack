@@ -21,7 +21,7 @@ Options:
 
   --mode STR                    Mode to run [wgs, wts, wgts, wgts_existing_wgs, wgts_existing_wts, wgts_existing_both]
 
-  --subject_id STR              Subject identifier
+  --subject_id STR              Subject id
 
   --tumor_wgs_sample_id STR     Tumor WGS sample identifier
   --tumor_wgs_library_id STR    Tumor WGS library identifier
