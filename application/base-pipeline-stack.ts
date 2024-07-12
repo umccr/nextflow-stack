@@ -125,28 +125,30 @@ export class BasePipelineStack extends cdk.Stack {
     //
     // One side-effect of this is that pipelines not using FusionFS will still be run on instance with NVMe SSD but
     // won't utilise that resource.
-    const queueName = constants.PIPELINE_BATCH_QUEUE_BASENAME;
     const storageType = constants.InstanceStorageType.NvmeSsdOnly;
-
 
     const launchTemplate = this.getLaunchTemplate({
       namespace: 'BasePipeline',
       storageType: storageType,
     });
 
-    const [computeEnvironment, jobQueue] = this.getComputeEnvironment({
-      queueData: batchQueues.pipelineQueue,
-      queueType: constants.QueueType.Ondemand,
-      storageType: storageType,
-      vpc: args.vpc,
-      securityGroup: args.securityGroup,
-      launchTemplate: launchTemplate,
-      roleBatchInstance: roleBatchInstance,
-      serviceType: constants.ServiceType.Pipeline,
-      queueName: queueName,
-    });
+    for (let pipelineQueueData of batchQueues.pipelineQueues) {
 
-    this.jobQueuePipelineArns.push(jobQueue.jobQueueArn);
+      const [computeEnvironment, jobQueue] = this.getComputeEnvironment({
+        queueData: pipelineQueueData,
+        queueType: constants.QueueType.Ondemand,
+        storageType: storageType,
+        vpc: args.vpc,
+        securityGroup: args.securityGroup,
+        launchTemplate: launchTemplate,
+        roleBatchInstance: roleBatchInstance,
+        serviceType: constants.ServiceType.Pipeline,
+      });
+
+      this.jobQueuePipelineArns.push(jobQueue.jobQueueArn);
+
+    }
+
   }
 
   getLaunchTemplate(args: {
@@ -215,7 +217,6 @@ export class BasePipelineStack extends cdk.Stack {
     roleBatchInstance: iam.Role,
     roleBatchSpotfleet?: iam.Role,
     serviceType: constants.ServiceType,
-    queueName?: string,
   }): [batch.ManagedEc2EcsComputeEnvironment, batch.JobQueue] {
 
     let queueDataInstanceTypeKey: string;
@@ -257,17 +258,12 @@ export class BasePipelineStack extends cdk.Stack {
         throw new Error('Got bad queue type');
     }
 
-    let queueName: string;
-    if (args.queueName) {
-      queueName = args.queueName;
-    } else {
-      queueName = batchQueues.getQueueName({
-        queueBaseName: args.queueData.name,
-        queueType: args.queueType,
-        storageType: args.storageType,
-        serviceType: args.serviceType,
-      });
-    }
+    let queueName: string = batchQueues.getQueueName({
+      queueBaseName: args.queueData.name,
+      queueType: args.queueType,
+      storageType: args.storageType,
+      serviceType: args.serviceType,
+    });
 
     const computeEnvId = `BaseComputeEnvironment-${queueName}`;
     const computeEnvironment = new batch.ManagedEc2EcsComputeEnvironment(this, computeEnvId, {

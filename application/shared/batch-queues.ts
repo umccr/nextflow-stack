@@ -14,7 +14,7 @@ export function getQueueName(args: {
       queueName = `task-${args.queueType.toLowerCase()}-${args.queueBaseName}-${args.storageType.toLowerCase()}`;
       break;
     case (constants.ServiceType.Pipeline):
-      queueName = `${args.queueBaseName}-${args.queueType.toLowerCase()}-${args.storageType.toLowerCase()}`;
+      queueName = args.queueBaseName;
       break;
     default:
       throw new Error('Got bad service type');
@@ -31,13 +31,24 @@ export interface IQueueData {
 }
 
 
-export const pipelineQueue : IQueueData = {
-  name: 'pipeline',
-  instances: new Map([
-    ['standard', ['r6i.large']],
-    ['nvme_ssd', ['r6id.large']],
-  ]),
-};
+export const pipelineQueues : IQueueData[] = [
+  {
+    name: 'pipeline',
+    instances: new Map([
+      ['standard', ['r6i.large']],
+      ['nvme_ssd', ['r6id.large']],
+    ]),
+  },
+
+  {
+    name: 'manual-pipeline',
+    instances: new Map([
+      ['standard', ['r6i.large']],
+      ['nvme_ssd', ['r6id.large']],
+    ]),
+  },
+
+];
 
 export const taskQueues: IQueueData[] = [
 
