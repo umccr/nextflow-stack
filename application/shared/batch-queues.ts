@@ -109,6 +109,15 @@ export const taskQueues: IQueueData[] = [
   },
 
   {
+    name: '32cpu_64gb',
+    instances: new Map([
+      ['standard', ['c5a.8xlarge', 'c6a.8xlarge']],
+      ['nvme_ssd', ['c5ad.8xlarge', 'c6id.8xlarge']],
+    ]),
+    maxvCpus: 2048,
+  },
+
+  {
     name: '32cpu_128gb',
     instances: new Map([
       ['standard', ['m5a.8xlarge', 'm6a.8xlarge']],
