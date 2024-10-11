@@ -17,7 +17,8 @@ ARG DOCKER_CE_VERSION="23.0.1-1"
 ARG DOCKER_COMPOSE_VERSION="2.16.0-1"
 
 # Pipeline GH URL and branch/tag
-ARG PIPELINE_GITHUB_REF  // NOTE(SW): must be provided as build argument
+# NOTE(SW): PIPELINE_GITHUB_REF must be provided as build argument
+ARG PIPELINE_GITHUB_REF
 ARG PIPELINE_GITHUB_REPO_URL="https://github.com/nf-core/oncoanalyser"
 
 RUN \
@@ -95,8 +96,10 @@ RUN \
 
 COPY assets/nextflow_aws.template.config /root/pipeline/assets/
 COPY assets/run.sh /root/pipeline/assets/
+COPY assets/run-v2.sh /root/pipeline/assets/
 
 RUN \
-  chmod +x "/root/pipeline/assets/run.sh"
+  chmod +x "/root/pipeline/assets/run.sh" && \
+  chmod +x "/root/pipeline/assets/run-v2.sh"
 
 WORKDIR /root/pipeline/
