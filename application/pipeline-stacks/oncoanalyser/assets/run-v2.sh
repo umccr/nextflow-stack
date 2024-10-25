@@ -150,8 +150,9 @@ get_mode(){
    --exit-status \
    --argjson valid_modes_array "$(bash_array_to_jq_list "${VALID_MODES[@]}")" \
     '
-      if any($bash_array_to_jq_list[] == .inputs.mode); then
-        .inputs.mode
+      .inputs.mode as $mode |
+      if any($valid_modes_array[] == $mode) then
+        $mode
       else
         null
       end
@@ -166,8 +167,9 @@ get_analysis_type(){
    --exit-status \
    --argjson valid_analysis_types_array "$(bash_array_to_jq_list "${VALID_ANALYSIS_TYPES[@]}")" \
     '
-      if any($bash_array_to_jq_list[] == .inputs.analysis_type); then
-        .inputs.analysis_type
+      .inputs.analysis_type as $analysis_type |
+      if any($valid_analysis_types_array[] == $analysis_type) then
+        $analysis_type
       else
         null
       end
@@ -379,7 +381,7 @@ generate_wgts_dna_samplesheet(){
     '
       [
         {
-          "group_id": "\(.tumor_dna_sample_id)_\(.normal_dna_sample_id)",
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)",
           "subject_id": .inputs.subject_id,
           "sample_id": .inputs.tumor_dna_sample_id,
           "sample_type": "tumor",
@@ -388,7 +390,7 @@ generate_wgts_dna_samplesheet(){
           "filepath": .inputs.tumor_dna_bam_uri
         },
         {
-          "group_id": "\(.tumor_dna_sample_id)_\(.normal_dna_sample_id)",
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)",
           "subject_id": .inputs.subject_id,
           "sample_id": .inputs.normal_dna_sample_id,
           "sample_type": "normal",
@@ -623,7 +625,7 @@ generate_standard_args(){
         "force_genome": true,
         "ref_data_hmf_data_path": $ref_data_hmf_data_path,
         "ref_data_virusbreakenddb_path": $ref_data_virusbreakenddb_path,
-        "outdir": "$output_results_dir"
+        "outdir": $output_results_dir
       }
     '
 }
@@ -744,12 +746,6 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-
-if [[ -z "${mode:-}" ]]; then
-  print_help_text
-  echo_stderr "\nERROR: --mode is required"
-  exit 1
-fi
 
 # Load manifest json
 if ! MANIFEST_JSON="$( \
@@ -873,7 +869,6 @@ aws ec2 replace-iam-instance-profile-association 1>/dev/null \
   --iam-instance-profile "Arn=$(get_batch_instance_profile_arn_from_ssm)"
 
 ## END LOCAL EXECUTOR WORKAROUND ##
-
 
 ## START SAMPLESHEET AND NEXTFLOW ARGS ##
 

@@ -11,9 +11,11 @@ export function createPipelineRoles(args: { context: cdk.Stack, workflowName: st
 
     // Profiles
     const profileBatchInstanceTask = new iam.CfnInstanceProfile(args.context, `TaskBatchInstanceProfile-${args.workflowName}`, {
+      instanceProfileName: `nextflow-${args.workflowName}-task-batch-instance-profile`,
       roles: [roleBatchInstanceTask.roleName],
     });
     const profileBatchInstancePipeline = new iam.CfnInstanceProfile(args.context, `PipelineBatchInstanceProfile-${args.workflowName}`, {
+      instanceProfileName: `nextflow-${args.workflowName}-pipeline-batch-instance-profile`,
       roles: [roleBatchInstancePipeline.roleName],
     });
 
@@ -69,6 +71,7 @@ export function createPipelineRoles(args: { context: cdk.Stack, workflowName: st
 
 export function getRoleBatchInstanceTask(args: { context: cdk.Stack, workflowName: string }) {
   const roleTask = new iam.Role(args.context, `TaskBatchInstanceRole-${args.workflowName}`, {
+    roleName: `nextflow-${args.workflowName}-task-batch-instance-role`,
     assumedBy: new iam.CompositePrincipal(
       new iam.ServicePrincipal('ec2.amazonaws.com'),
       new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
@@ -108,6 +111,7 @@ export function getRoleBatchInstanceTask(args: { context: cdk.Stack, workflowNam
 export function getBaseBatchInstancePipelineRole(args: { context: cdk.Stack, workflowName: string, jobQueueArns: string[] }) {
 
   const rolePipeline = new iam.Role(args.context, `PipelineBatchInstanceRole-${args.workflowName}`, {
+    roleName: `nextflow-${args.workflowName}-pipeline-batch-instance-role`,
     assumedBy: new iam.CompositePrincipal(
       new iam.ServicePrincipal('ec2.amazonaws.com'),
       new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
