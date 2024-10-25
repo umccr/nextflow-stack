@@ -78,7 +78,7 @@ export class ApplicationStack extends cdk.Stack {
     const stackSettings = new settings.Sash(args.envName, args.workflowName);
     const s3Data = stackSettings.getS3Data();
 
-    const pipelineStack = new StarAlignNfStack(this, 'SashStack', {
+    const pipelineStack = new SashStack(this, 'SashStack', {
       ...args,
       pipelineVersionTag: stackSettings.versionTag,
       nfBucketName: s3Data.get('nfBucketName')!,

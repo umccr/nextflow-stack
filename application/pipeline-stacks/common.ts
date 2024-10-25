@@ -80,6 +80,7 @@ export class PipelineStack extends cdk.Stack {
 
     // Create job definition for pipeline execution
     const pipelineJobDefinition = new batch.EcsJobDefinition(this, `Nextflow-${props.workflowName}`, {
+      jobDefinitionName: `Nextflow-${props.workflowName}`,
       container: new batch.EcsEc2ContainerDefinition(this, `Nextflow-Container-${props.workflowName}`, {
         cpu: 1,
         image: dockerStack.image,
