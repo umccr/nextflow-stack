@@ -123,7 +123,20 @@ check_required_input_args(){
     '
       .inputs as $inputs |
       all($required_input_args[]; in($inputs))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
+}
+
+check_required_engine_parameters_args(){
+  : '
+  Check that each of the required engine_parameters args are present in the manifest json
+  '
+  jq --raw-output \
+    --exit-status \
+    --argjson required_engine_parameters "$(bash_array_to_jq_list "${REQUIRED_ENGINE_PARAMETER_ARGS[@]}")" \
+    '
+      .engine_parameters as $engine_parameters |
+      all($required_engine_parameters[]; in($engine_parameters))
+    ' <<< "${1}" 1>/dev/null
 }
 
 ## Input functions
@@ -214,7 +227,6 @@ get_custom_config(){
   Get the custom config from the manifest json
   '
   jq --raw-output \
-    --exit-status \
     '.engine_parameters.custom_config_str' <<< "${1}"
 }
 
@@ -223,7 +235,6 @@ get_resume_nextflow_uri(){
   Get the custom config from the manifest json
   '
   jq --raw-output \
-    --exit-status \
     '.engine_parameters.resume_nextflow_uri' <<< "${1}"
 }
 
@@ -271,10 +282,14 @@ generate_standard_args(){
   Generate the standard nextflow args
   '
   local output_results_dir="${1}"
+  local ref_data_hmf_data_path
+
+  # Set ref data path
+  ref_data_hmf_data_path="s3://$(get_refdata_basepath)/"
 
   jq --null-input --raw-output \
-    --arg get_refdata_basepath "s3://$(get_refdata_basepath)/" \
-    --arg output_results_dir "${output_results_dir}" \
+    --arg ref_data_hmf_data_path "${ref_data_hmf_data_path%/}/" \
+    --arg output_results_dir "${output_results_dir%/}/" \
     --arg samplesheet_csv "${SAMPLESHEET_CSV_PATH}" \
     '
       {
@@ -284,6 +299,43 @@ generate_standard_args(){
         "outdir": "$output_results_dir"
       }
     '
+}
+
+generate_nextflow_params(){
+  : '
+  Generate the nextflow args specific to the mode / analysis combination
+  For sash analysis, simply extend the nextflow args
+  '
+  local output_results_dir="${1}"
+
+  jq --null-input --raw-output \
+      --argjson stdargs "$(generate_standard_args "${output_results_dir%/}/")" \
+      '
+        $stdargs
+      ' \
+  > "${NEXTFLOW_PARAMS_PATH}"
+}
+
+create_nextflow_config() {
+  : '
+  Given a portal run id, generate the nextflow config file
+  '
+  local portal_run_id="${1}"
+  local s3_genomes_data_path
+  local batch_instance_role_arn
+
+  s3_genomes_data_path="s3://$(get_genomes_path_from_ssm)"
+  batch_instance_role_arn="$(get_batch_instance_role_arn_from_ssm)"
+
+  sed \
+  --regexp-extended \
+  --expression \
+    "
+      s#__S3_GENOMES_DATA_PATH__#${s3_genomes_data_path%/}/#g;
+      s#__BATCH_INSTANCE_ROLE__#${batch_instance_role_arn}#g;
+      s#__PORTAL_RUN_ID__#${portal_run_id}#g;
+    " \
+  "${TEMPLATE_CONFIG_PATH}" > "${NEXTFLOW_CONFIG_PATH}"
 }
 
 ### END JQ FUNCTIONS ###
@@ -322,7 +374,7 @@ upload_data() {
     --exclude='software/*' \
     --exclude='assets/*' \
     --exclude='work/*' \
-    ./ "${output_results_dir}/"
+    ./ "${output_results_dir%/}/"
 }
 
 ### END AWS FUNCTIONS ###
@@ -432,27 +484,24 @@ aws ec2 replace-iam-instance-profile-association 1>/dev/null \
 ## START SAMPLESHEET AND NEXTFLOW ARGS ##
 
 generate_samplesheet "${MANIFEST_JSON}"
-generate_nextflow_params "${MANIFEST_JSON}"
+generate_nextflow_params "$(get_output_results_dir "${MANIFEST_JSON}")"
 
 ## END SAMPLESHEET AND NEXTFLOW ARGS  ##
 
 ## CREATE NEXTFLOW CONFIGS ##
-sed \
-  --regexp-extended \
-  --expression \
-    "
-      s#__S3_GENOMES_DATA_PATH__#s3://$(get_genomes_path_from_ssm)#g;
-      s#__BATCH_INSTANCE_ROLE__#$(get_batch_instance_role_arn_from_ssm)#g;
-      s#__PORTAL_RUN_ID__#$(get_portal_run_id "${MANIFEST_JSON}")#g;
-    " \
-  "${TEMPLATE_CONFIG_PATH}" > "${NEXTFLOW_CONFIG_PATH}"
+create_nextflow_config "$(get_portal_run_id "${MANIFEST_JSON}")"
 
 config_args_array=( \
   "-config" "${NEXTFLOW_CONFIG_PATH}" \
+)
+
+nf_run_args_array=(
   "-ansi-log" "false" \
   "-profile" "docker" \
   "-work-dir" "$(get_output_scratch_dir "${MANIFEST_JSON}")" \
+  "-params-file" "${NEXTFLOW_PARAMS_PATH}"
 )
+
 
 custom_config="$(get_custom_config "${MANIFEST_JSON}")"
 if [[ -n "${custom_config}" && ! "${custom_config}" == "null" ]]; then
@@ -470,7 +519,7 @@ if [[ -n "${resume_nextflow_uri:-}" && ! "${resume_nextflow_uri}" == "null" ]]; 
   aws s3 sync \
     --no-progress \
     "${resume_nextflow_uri}/" ./.nextflow/
-  config_args_array+=( "-resume" )
+  nf_run_args_array+=( "-resume" )
 fi
 
 ## END RESUME BLOCK ##
@@ -482,10 +531,10 @@ trap 'cleanup "${output_results_dir}"' EXIT
 nextflow \
   "${config_args_array[@]}" \
   run "${MAIN_NF_PATH}" \
-  --params "${NEXTFLOW_PARAMS_PATH}"
+  "${nf_run_args_array[@]}"
 
 # Upload data cleanly
-upload_data "${output_results_dir}/"
+upload_data "${output_results_dir%/}/"
 
 # Then exit cleanly
 trap - EXIT

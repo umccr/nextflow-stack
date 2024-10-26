@@ -194,5 +194,17 @@ export function getBaseBatchInstancePipelineRole(args: { context: cdk.Stack, wor
     })],
   });
 
+  new iam.Policy(args.context, `CloudWatchLogEvents-${args.workflowName}`, {
+    roles: [rolePipeline],
+    statements: [new iam.PolicyStatement({
+      actions: [
+        'logs:GetLogEvents',
+      ],
+      resources: [
+          `arn:aws:logs:${args.context.region}:${args.context.account}:log-group:/aws/batch/job/:nf-*`
+      ],
+    })],
+  });
+
   return rolePipeline;
 }

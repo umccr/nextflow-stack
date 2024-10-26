@@ -145,6 +145,7 @@ jq_to_csv(){
 get_mode(){
   : '
   Get the mode from the manifest json
+  Note that the "any(" logic requires jq 1.7 or higher
   '
   jq --raw-output \
    --exit-status \
@@ -186,7 +187,7 @@ check_required_input_args(){
     '
       .inputs as $inputs |
       all($required_input_args[]; in($inputs))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
 }
 
 check_required_engine_parameters_args(){
@@ -199,7 +200,7 @@ check_required_engine_parameters_args(){
     '
       .engine_parameters as $engine_parameters |
       all($required_engine_parameters[]; in($engine_parameters))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
 }
 
 check_required_inputs_args_wgts_dna(){
@@ -212,7 +213,7 @@ check_required_inputs_args_wgts_dna(){
     '
       .inputs as $inputs |
       all($required_input_args[]; in($inputs))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
 }
 
 check_required_inputs_args_wgts_rna(){
@@ -225,7 +226,7 @@ check_required_inputs_args_wgts_rna(){
     '
       .inputs as $inputs |
       all($required_input_args[]; in($inputs))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
 }
 
 check_required_inputs_args_wgts_dna_rna(){
@@ -238,7 +239,7 @@ check_required_inputs_args_wgts_dna_rna(){
     '
       .inputs as $inputs |
       all($required_input_args[]; in($inputs))
-    ' <<< "${1}"
+    ' <<< "${1}" 1>/dev/null
 }
 
 get_subject_id(){
@@ -354,7 +355,6 @@ get_custom_config(){
   Get the custom config from the manifest json
   '
   jq --raw-output \
-    --exit-status \
     '.engine_parameters.custom_config_str' <<< "${1}"
 }
 
@@ -363,7 +363,6 @@ get_resume_nextflow_uri(){
   Get the custom config from the manifest json
   '
   jq --raw-output \
-    --exit-status \
     '.engine_parameters.resume_nextflow_uri' <<< "${1}"
 }
 
@@ -608,11 +607,18 @@ generate_standard_args(){
   Generate the standard nextflow args
   '
   local output_results_dir="${1}"
+  local ref_data_hmf_data_path
+  local ref_data_virusbreakenddb_path
 
+  # Set the ref data paths
+  ref_data_hmf_data_path="s3://$(get_hmf_refdata_from_ssm)/"
+  ref_data_virusbreakenddb_path="s3://$(get_virusbreakend_db_from_ssm)/"
+
+  # Generate the nextflow args
   jq --null-input --raw-output \
-    --arg ref_data_hmf_data_path "s3://$(get_hmf_refdata_from_ssm)/" \
-    --arg ref_data_virusbreakenddb_path "s3://$(get_virusbreakend_db_from_ssm)/" \
-    --arg output_results_dir "${output_results_dir}" \
+    --arg ref_data_hmf_data_path "${ref_data_hmf_data_path%/}/" \
+    --arg ref_data_virusbreakenddb_path "${ref_data_virusbreakenddb_path%/}/" \
+    --arg output_results_dir "${output_results_dir%/}/" \
     --arg samplesheet_csv "${SAMPLESHEET_CSV_PATH}" \
     '
       {
@@ -638,7 +644,7 @@ generate_wgts_dna_nextflow_params(){
   local output_results_dir="${1}"
 
   jq --null-input --raw-output \
-      --argjson stdargs "$(generate_standard_args "${output_results_dir}")" \
+      --argjson stdargs "$(generate_standard_args "${output_results_dir%/}/")" \
       '
         $stdargs
       ' \
@@ -652,7 +658,7 @@ generate_wgts_rna_nextflow_params(){
   local output_results_dir="${1}"
 
   jq --null-input --raw-output \
-      --argjson stdargs "$(generate_standard_args "${output_results_dir}")" \
+      --argjson stdargs "$(generate_standard_args "${output_results_dir%/}/")" \
       '
         $stdargs
       ' \
@@ -666,7 +672,7 @@ generate_wgts_dna_rna_nextflow_params(){
   local output_results_dir="${1}"
 
   jq --null-input --raw-output \
-    --argjson stdargs "$(generate_standard_args "${output_results_dir}")" \
+    --argjson stdargs "$(generate_standard_args "${output_results_dir%/}/")" \
     '
       $stdargs +
       {
@@ -678,6 +684,27 @@ generate_wgts_dna_rna_nextflow_params(){
   > "${NEXTFLOW_PARAMS_PATH}"
 }
 
+create_nextflow_config() {
+  : '
+  Given a portal run id, generate the nextflow config file
+  '
+  local portal_run_id="${1}"
+  local s3_genomes_data_path
+  local batch_instance_role_arn
+
+  s3_genomes_data_path="s3://$(get_genomes_path_from_ssm)"
+  batch_instance_role_arn="$(get_batch_instance_role_arn_from_ssm)"
+
+  sed \
+  --regexp-extended \
+  --expression \
+    "
+      s#__S3_GENOMES_DATA_PATH__#${s3_genomes_data_path%/}/#g;
+      s#__BATCH_INSTANCE_ROLE__#${batch_instance_role_arn}#g;
+      s#__PORTAL_RUN_ID__#${portal_run_id}#g;
+    " \
+  "${TEMPLATE_CONFIG_PATH}" > "${NEXTFLOW_CONFIG_PATH}"
+}
 
 ### END JQ FUNCTIONS ###
 
@@ -723,7 +750,7 @@ upload_data() {
     --exclude='software/*' \
     --exclude='assets/*' \
     --exclude='work/*' \
-    ./ "${output_results_dir}/"
+    ./ "${output_results_dir%/}/"
 }
 
 ### END AWS FUNCTIONS ###
@@ -875,36 +902,31 @@ aws ec2 replace-iam-instance-profile-association 1>/dev/null \
 # Check required inputs args for wgts dna
 if [[ "${mode}" == "wgts" && "${analysis_type}" == "DNA" ]]; then
   generate_wgts_dna_samplesheet "${MANIFEST_JSON}"
-  generate_wgts_dna_nextflow_params "${MANIFEST_JSON}"
+  generate_wgts_dna_nextflow_params "$(get_output_results_dir "${MANIFEST_JSON}")"
 fi
 
 # Check required inputs args for wgts rna
 if [[ "${mode}" == "wgts" && "${analysis_type}" == "RNA" ]]; then
   generate_wgts_rna_to_samplesheet "${MANIFEST_JSON}"
-  generate_wgts_rna_nextflow_params "${MANIFEST_JSON}"
+  generate_wgts_rna_nextflow_params "$(get_output_results_dir "${MANIFEST_JSON}")"
 fi
 
 # Check required inputs args for wgts rna
 if [[ "${mode}" == "wgts" && "${analysis_type}" == "DNA/RNA" ]]; then
   generate_wgts_dna_rna_to_samplesheet "${MANIFEST_JSON}"
-  generate_wgts_dna_rna_nextflow_params "${MANIFEST_JSON}"
+  generate_wgts_dna_rna_nextflow_params "$(get_output_results_dir "${MANIFEST_JSON}")"
 fi
 
 ## END SAMPLESHEET AND NEXTFLOW ARGS  ##
 
 ## CREATE NEXTFLOW CONFIGS ##
-sed \
-  --regexp-extended \
-  --expression \
-    "
-      s#__S3_GENOMES_DATA_PATH__#s3://$(get_genomes_path_from_ssm)#g;
-      s#__BATCH_INSTANCE_ROLE__#$(get_batch_instance_role_arn_from_ssm)#g;
-      s#__PORTAL_RUN_ID__#$(get_portal_run_id "${MANIFEST_JSON}")#g;
-    " \
-  "${TEMPLATE_CONFIG_PATH}" > "${NEXTFLOW_CONFIG_PATH}"
+create_nextflow_config "$(get_portal_run_id "${MANIFEST_JSON}")"
 
 config_args_array=( \
   "-config" "${NEXTFLOW_CONFIG_PATH}" \
+)
+
+nf_run_args_array=(
   "-ansi-log" "false" \
   "-profile" "docker" \
   "-work-dir" "$(get_output_scratch_dir "${MANIFEST_JSON}")" \
@@ -926,10 +948,14 @@ if [[ -n "${resume_nextflow_uri:-}" && ! "${resume_nextflow_uri}" == "null" ]]; 
   aws s3 sync \
     --no-progress \
     "${resume_nextflow_uri}/" ./.nextflow/
-  config_args_array+=( "-resume" )
+  nf_run_args_array+=( "-resume" )
 fi
 
 ## END RESUME BLOCK ##
+
+# DEBUG
+aws sts get-caller-identity --output=json | jq
+# DEBUG
 
 ## RUN NEXTFLOW ##
 output_results_dir="$(get_output_results_dir "${MANIFEST_JSON}")"
@@ -938,10 +964,11 @@ trap 'cleanup "${output_results_dir}"' EXIT
 nextflow \
   "${config_args_array[@]}" \
   run "${MAIN_NF_PATH}" \
-  --params "${NEXTFLOW_PARAMS_PATH}"
+  "${nf_run_args_array[@]}" \
+  -params-file "${NEXTFLOW_PARAMS_PATH}"
 
 # Upload data cleanly
-upload_data "${output_results_dir}/"
+upload_data "${output_results_dir%/}/"
 
 # Then exit cleanly
 trap - EXIT
