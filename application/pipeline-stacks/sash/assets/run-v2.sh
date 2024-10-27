@@ -252,21 +252,21 @@ generate_samplesheet(){
     '
       [
         {
-          "id": "\(.tumor_dna_sample_id)_\(.normal_dna_sample_id)",
+          "id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)",
           "subject_name": .inputs.subject_id,
           "sample_name": .inputs.tumor_dna_sample_id,
           "filetype": "dragen_somatic_dir",
           "filepath": .inputs.dragen_somatic_uri
         },
         {
-          "id": "\(.tumor_dna_sample_id)_\(.normal_dna_sample_id)",
+          "id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)",
           "subject_name": .inputs.subject_id,
           "sample_name": .inputs.normal_dna_sample_id,
           "filetype": "dragen_germline_dir",
           "filepath": .inputs.dragen_germline_uri
         },
         {
-          "id": "\(.tumor_dna_sample_id)_\(.normal_dna_sample_id)",
+          "id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)",
           "subject_name": .inputs.subject_id,
           "sample_name": .inputs.tumor_dna_sample_id,
           "filetype": "oncoanalyser_dir",
@@ -296,7 +296,7 @@ generate_standard_args(){
         "monochrome_logs": true,
         "input": $samplesheet_csv,
         "ref_data_path": $ref_data_hmf_data_path,
-        "outdir": "$output_results_dir"
+        "outdir": $output_results_dir
       }
     '
 }
@@ -321,17 +321,14 @@ create_nextflow_config() {
   Given a portal run id, generate the nextflow config file
   '
   local portal_run_id="${1}"
-  local s3_genomes_data_path
   local batch_instance_role_arn
 
-  s3_genomes_data_path="s3://$(get_genomes_path_from_ssm)"
   batch_instance_role_arn="$(get_batch_instance_role_arn_from_ssm)"
 
   sed \
   --regexp-extended \
   --expression \
     "
-      s#__S3_GENOMES_DATA_PATH__#${s3_genomes_data_path%/}/#g;
       s#__BATCH_INSTANCE_ROLE__#${batch_instance_role_arn}#g;
       s#__PORTAL_RUN_ID__#${portal_run_id}#g;
     " \
