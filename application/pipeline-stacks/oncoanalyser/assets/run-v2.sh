@@ -591,7 +591,7 @@ generate_wgts_dna_rna_to_samplesheet(){
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
           "subject_id": .inputs.subject_id,
-          "sample_id": .inputs.tumor_dna_sample_id,
+          "sample_id": .inputs.tumor_rna_sample_id,
           "sample_type": "tumor",
           "sequence_type": "rna",
           "filetype": "isofox_dir",
