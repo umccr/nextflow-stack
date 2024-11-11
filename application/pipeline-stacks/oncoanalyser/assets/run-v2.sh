@@ -497,7 +497,7 @@ generate_wgts_dna_rna_to_samplesheet(){
           "sample_type": "tumor",
           "sequence_type": "dna",
           "filetype": "flagstat",
-          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)flagstats/\(.inputs.tumor_wgs_sample_id).flagstat"
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)flagstats/\(.inputs.tumor_dna_sample_id).flagstat"
         },
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
