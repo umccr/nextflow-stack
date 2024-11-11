@@ -469,7 +469,7 @@ generate_wgts_dna_rna_to_samplesheet(){
           "sample_id": .inputs.tumor_rna_sample_id,
           "sample_type": "tumor",
           "sequence_type": "rna",
-          "filetype": "bam_markdups",
+          "filetype": "bam",
           "filepath": "\(.inputs.rna_oncoanalyser_analysis_uri)alignments/rna/\(.inputs.tumor_rna_sample_id).md.bam"
         },
         {
