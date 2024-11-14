@@ -595,7 +595,7 @@ generate_wgts_dna_rna_to_samplesheet(){
           "sample_type": "tumor",
           "sequence_type": "rna",
           "filetype": "isofox_dir",
-          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)isofox/"
+          "filepath": "\(.inputs.rna_oncoanalyser_analysis_uri)isofox/"
         }
       ]
     ' <<< "${manifest_json}" | \
