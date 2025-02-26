@@ -13,8 +13,14 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 import * as ecrDeployment from 'cdk-ecr-deployment';
+import * as Handlebars from "handlebars";
 
 import * as settings from './settings';
+import * as fs from "fs";
+import {ContainerImage} from "aws-cdk-lib/aws-ecs";
+import {Platform} from "aws-cdk-lib/aws-ecr-assets";
+
+const BATCH_VOLUME_MOUNT_POINT = "/mnt/local_ephemeral/"
 
 export class ApplicationStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
@@ -23,16 +29,15 @@ export class ApplicationStack extends cdk.Stack {
 
     // Collect existing resources
     const vpc = ec2.Vpc.fromLookup(this, 'VPC', {
-      vpcName: settings.VPC_NAME,
+      isDefault: true
     });
 
-    const securityGroup = ec2.SecurityGroup.fromLookupByName(
-      this,
-      'SecurityGroup',
-      settings.SECURITY_GROUP_NAME,
-      vpc,
-    );
+    const securityGroup = new ec2.SecurityGroup(this, "SecurityGroup", { vpc: vpc, allowAllOutbound: true });
 
+    const image = new ecrAssets.DockerImageAsset(this, 'DockerImage', {
+      directory: path.join(__dirname, 'resources'),
+      platform: Platform.LINUX_AMD64
+    });
 
     // Create Batch resources and co for Nextflow ***task*** jobs
     const roleBatchInstanceTask = new iam.Role(this, 'BatchInstanceRoleTask', {
@@ -218,9 +223,9 @@ export class ApplicationStack extends cdk.Stack {
 
 
     // Create Docker image and deploy
-    const dockerStack = new DockerImageBuildStack(this, 'DockerImageBuildStack', {
-      env: props.env,
-    });
+    //const dockerStack = new DockerImageBuildStack(this, 'DockerImageBuildStack', {
+    //  env: props.env,
+    //});
 
     // Bucket permissions
     const nfBucket = s3.Bucket.fromBucketName(this, 'S3Bucket',
@@ -236,37 +241,31 @@ export class ApplicationStack extends cdk.Stack {
     nfBucket.grantReadWrite(roleBatchInstancePipeline, `${settings.S3_BUCKET_OUTPUT_PREFIX}/*`);
     nfBucket.grantReadWrite(roleBatchInstanceTask, `${settings.S3_BUCKET_OUTPUT_PREFIX}/*`);
 
+    const nextflowConfigTemplate = fs.readFileSync(path.join(__dirname, "resources/nextflow_aws.template.config"), { encoding: "utf-8"});
+
+    const nextflowConfigTemplateCompiled = Handlebars.compile(nextflowConfigTemplate);
+
+    const nextflowConfig = nextflowConfigTemplateCompiled({
+      BATCH_INSTANCE_TASK_ROLE_ARN: roleBatchInstanceTask.roleArn,
+      BATCH_JOB_QUEUE_NAME: jobQueueTask.jobQueueName,
+      S3_BUCKET_NAME: settings.S3_BUCKET_NAME,
+      S3_BUCKET_REFDATA_PREFIX: settings.S3_BUCKET_REFDATA_PREFIX,
+      BATCH_VOLUME_MOUNT_POINT: BATCH_VOLUME_MOUNT_POINT
+    }, { });
+
     // Create job definition for pipeline execution
     const jobDefinition = new batch.EcsJobDefinition(this, 'JobDefinition', {
       jobDefinitionName: 'oncoanalyser-job-definition',
       container: new batch.EcsEc2ContainerDefinition(this, 'EcsEc2ContainerDefinition', {
         cpu: 1,
-        image: dockerStack.image,
+        image: ContainerImage.fromDockerImageAsset(image),
         command: ['true'],
         memory: cdk.Size.mebibytes(1000),
         jobRole: roleBatchInstancePipeline,
+        environment: {
+          ONCOANALYSER_NEXTFLOW_CONFIG_BASE64: Buffer.from(nextflowConfig).toString('base64')
+        }
       }),
-    });
-
-    // Create SSM parameters
-    new ssm.StringParameter(this, 'SsmParameter-batch_job_queue_name', {
-      parameterName: '/oncoanalyser_stack/batch_job_queue_name',
-      stringValue: jobQueueTask.jobQueueName,
-    });
-
-    new ssm.StringParameter(this, 'SsmParameter-batch_instance_task_role_arn', {
-      parameterName: '/oncoanalyser_stack/batch_instance_task_role_arn',
-      stringValue: roleBatchInstanceTask.roleArn,
-    });
-
-    new ssm.StringParameter(this, 'SsmParameter-s3_bucket_name', {
-      parameterName: '/oncoanalyser_stack/s3_bucket_name',
-      stringValue: settings.S3_BUCKET_NAME,
-    });
-
-    new ssm.StringParameter(this, 'SsmParameter-s3_refdata_prefix', {
-      parameterName: '/oncoanalyser_stack/s3_refdata_prefix',
-      stringValue: settings.S3_BUCKET_REFDATA_PREFIX,
     });
   }
 
@@ -282,10 +281,10 @@ Content-Type: multipart/mixed; boundary="==BOUNDARY=="
 Content-Type: text/x-shellscript; charset="us-ascii"
 
 #!/bin/bash
-mkdir -p /mnt/local_ephemeral/
+mkdir -p ${BATCH_VOLUME_MOUNT_POINT}
 mkfs.ext4 /dev/nvme1n1
-mount /dev/nvme1n1 /mnt/local_ephemeral/
-chmod 777 /mnt/local_ephemeral/
+mount /dev/nvme1n1 ${BATCH_VOLUME_MOUNT_POINT}
+chmod 777 ${BATCH_VOLUME_MOUNT_POINT}
 
 --==BOUNDARY==--`
     );
@@ -353,15 +352,13 @@ rm -rf /tmp/awscliv2.zip /tmp/aws/ /tmp/amazon-ebs-autoscale/
 }
 
 
-export class DockerImageBuildStack extends cdk.Stack {
+/*export class DockerImageBuildStack extends cdk.Stack {
   public readonly image: ecs.EcrImage;
 
   constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
-    const image = new ecrAssets.DockerImageAsset(this, 'DockerImage', {
-      directory: path.join(__dirname, 'resources'),
-    });
+
 
     const dockerDestBase = `${props.env!.account}.dkr.ecr.${props.env!.region}.amazonaws.com`;
 
@@ -373,4 +370,4 @@ export class DockerImageBuildStack extends cdk.Stack {
     const ecrRepository = ecr.Repository.fromRepositoryName(this, 'EcrRespository', settings.ECR_REPO);
     this.image = ecs.EcrImage.fromEcrRepository(ecrRepository, settings.DOCKER_IMAGE_TAG);
   }
-}
+} */
