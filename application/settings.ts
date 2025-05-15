@@ -9,7 +9,7 @@ export const taskQueueTypes = [
 
 export const taskInstanceStorageTypes = [
   constants.InstanceStorageType.EbsOnly,
-  constants.InstanceStorageType.NvmeSsdOnly,
+  //constants.InstanceStorageType.NvmeSsdOnly,
 ];
 
 export const maxvCpusDefault = 128;
