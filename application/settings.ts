@@ -114,7 +114,7 @@ export class Oncoanalyser extends Shared {
 
 
 export class Sash extends Shared {
-  readonly versionTag = 'v0.6.0'
+  readonly versionTag = 'v0.6.0-dev'
 
   getSsmParameters() {
     return new Map<string, string>([
