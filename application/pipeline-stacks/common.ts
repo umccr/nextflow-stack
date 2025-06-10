@@ -11,7 +11,7 @@ import * as iam from 'aws-cdk-lib/aws-iam'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { AWS_ENV_STG } from '../../deployment/settings-umccr';
+
 import * as ecrDeployment from 'cdk-ecr-deployment';
 
 import * as baseRoles from '../shared/base-roles';
@@ -51,7 +51,7 @@ export class PipelineStack extends cdk.Stack {
 
     // Create Docker image and deploy
     const dockerStack = new DockerImageBuildStack(this, `DockerImageBuildStack-${props.workflowName}`, {
-      env: AWS_ENV_STG,
+      env: props.envBuild,
       workflowName: props.workflowName,
       gitReference: props.pipelineVersionTag,
       dockerTag: props.dockerTag,
