@@ -198,6 +198,7 @@ export class DockerImageBuildStack extends cdk.Stack {
     const image = new ecrAssets.DockerImageAsset(this, `CDKDockerImage-${props.workflowName}`, {
       buildArgs: { 'PIPELINE_GITHUB_REF': props.gitReference },
       directory: path.join(__dirname, props.workflowName),
+      platform: ecrAssets.Platform.LINUX_AMD64,
     });
 
     const dockerDestBase = `${props.env.account}.dkr.ecr.${props.env.region}.amazonaws.com`;
