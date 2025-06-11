@@ -97,7 +97,6 @@ export class Oncoanalyser extends Shared {
       ...super.getS3Data().entries(),
       ['refdataGenomesPath', 'genomes'],
       ['refdataHmfPath', 'hmf_reference_data/hmftools/5.34_38--2'],
-      ['refDataVirusbreakendDbPath', 'databases/virusbreakend/virusbreakenddb_20210401'],
     ]);
   }
 
@@ -106,7 +105,6 @@ export class Oncoanalyser extends Shared {
       ...super.getSsmParameters().entries(),
       [`/nextflow_stack/${this.workflowName}/refdata_genomes`, `${this.getRefdataBasePath()}/${this.getS3Data().get('refdataGenomesPath')!}`],
       [`/nextflow_stack/${this.workflowName}/refdata_hmf`, `${this.getRefdataBasePath()}/${this.getS3Data().get('refdataHmfPath')!}`],
-      [`/nextflow_stack/${this.workflowName}/refdata_virusbreakend`, `${this.getRefdataBasePath()}/${this.getS3Data().get('refDataVirusbreakendDbPath')!}`],
       [`/nextflow_stack/${this.workflowName}/pipeline_version_tag`, this.versionTag],
     ]);
   }

@@ -252,10 +252,6 @@ get_hmf_refdata_from_ssm() {
   get_ssm_parameter_value "/nextflow_stack/oncoanalyser/refdata_hmf"
 }
 
-get_virusbreakend_db_from_ssm() {
-  get_ssm_parameter_value "/nextflow_stack/oncoanalyser/refdata_virusbreakend"
-}
-
 get_genomes_path_from_ssm() {
   get_ssm_parameter_value "/nextflow_stack/oncoanalyser/refdata_genomes"
 }
@@ -617,7 +613,6 @@ nextflow \
     --genome_type "alt" \
     --force_genome \
     --ref_data_hmf_data_path "s3://$(get_hmf_refdata_from_ssm)/" \
-    --ref_data_virusbreakenddb_path "s3://$(get_virusbreakend_db_from_ssm)/" \
     --outdir "${output_results_dir}/"
 
 # Upload data cleanly
