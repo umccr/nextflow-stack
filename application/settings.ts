@@ -96,7 +96,7 @@ export class Oncoanalyser extends Shared {
     return new Map<string, string>([
       ...super.getS3Data().entries(),
       ['refdataGenomesPath', 'genomes'],
-      ['refdataHmfPath', 'hmf_reference_data/hmftools/5.34_38--2'],
+      ['refdataHmfPath', 'hmf_reference_data/hmftools/hmf_pipeline_resources.38_v2.0--3/'],
     ]);
   }
 
