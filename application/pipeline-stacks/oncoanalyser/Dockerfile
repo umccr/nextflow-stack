@@ -3,7 +3,7 @@ FROM docker.io/continuumio/miniconda3:23.10.0-1
 # Set package versions and other info
 # Generic
 ARG JQ_VERSION="1.7.1"
-ARG NEXTFLOW_VERSION="24.04.4"
+ARG NEXTFLOW_VERSION="24.10.1"
 ARG OPENJDK_VERSION="17.0.10"
 ARG PARALLEL_VERSION="20230322"
 ARG RCLONE_VERSION="1.62.2"
