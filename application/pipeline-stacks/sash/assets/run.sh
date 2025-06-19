@@ -37,6 +37,7 @@ Options:
   --output_scratch_dir DIR      Output directory for scratch
 
   --resume_nextflow_dir FILE    Previous .nextflow/ directory used to resume a run (S3 URI)
+  --stub_run                    Enable stub run mode for testing workflow logic
 EOF
 }
 
@@ -100,6 +101,10 @@ while [ $# -gt 0 ]; do
     --resume_nextflow_dir)
       resume_nextflow_dir="${2%/}"
       shift 1
+    ;;
+
+    --stub_run)
+      stub_run="true"
     ;;
 
     -h|--help)
@@ -400,6 +405,9 @@ EOF
 nextflow_args=''
 if [[ -n "${resume_nextflow_dir:-}" ]]; then
   nextflow_args+=' -resume'
+fi
+if [[ "${stub_run:-}" == "true" ]]; then
+  nextflow_args+=' -stub'
 fi
 
 ## END NEXFLOW ARGS ##
