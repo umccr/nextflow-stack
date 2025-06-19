@@ -58,10 +58,10 @@ CUSTOM_CONFIG_PATH="custom.config"
 ## FUNCTIONS ##
 print_help_text() {
   cat <<EOF
-Usage example: run-v2.sh --manifest-json-str '{"inputs": {"mode": "wgts"...}, "engine_parameters": {"portal_run_id": ...}}'
+Usage example: run-v2.sh --manifest-json '{"inputs": {"mode": "wgts"...}, "engine_parameters": {"portal_run_id": ...}}'
 
 Options:
-  --manifest-json-str STR           Manifest json
+  --manifest-json STR           Manifest json
 
 Documentation:
   Manifest json should look like the following:
