@@ -69,7 +69,7 @@ export class CodePipelineStack extends Stack {
       }),
       codeBuildDefaults: {
           buildEnvironment: {
-            buildImage: LinuxBuildImage.STANDARD_6_0,
+            buildImage: LinuxBuildImage.STANDARD_7_0,
             computeType: ComputeType.LARGE
           },
           // we need to give the codebuild engines permissions to assume a role in DEV - in order that they
