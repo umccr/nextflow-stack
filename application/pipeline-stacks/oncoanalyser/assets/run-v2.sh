@@ -515,7 +515,7 @@ generate_wgts_dna_rna_to_samplesheet(){
           "sample_type": "tumor",
           "sequence_type": "dna",
           "filetype": "bamtools_dir",
-          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)bamtools/"
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)bamtools/\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_dna_sample_id)_bamtools/"
         },
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
@@ -524,7 +524,7 @@ generate_wgts_dna_rna_to_samplesheet(){
           "sample_type": "normal",
           "sequence_type": "dna",
           "filetype": "bamtools_dir",
-          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)bamtools/"
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)bamtools/\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.normal_dna_sample_id)_bamtools/"
         },
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
