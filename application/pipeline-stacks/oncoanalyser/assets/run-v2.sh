@@ -457,11 +457,47 @@ generate_wgts_dna_rna_to_samplesheet(){
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
           "subject_id": .inputs.subject_id,
+          "sample_id": .inputs.tumor_dna_sample_id,
+          "sample_type": "tumor",
+          "sequence_type": "dna",
+          "filetype": "redux_jitter_tsv",
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)alignments/dna/\(.inputs.tumor_dna_sample_id).jitter_params.tsv"
+        },
+        {
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
+          "subject_id": .inputs.subject_id,
+          "sample_id": .inputs.tumor_dna_sample_id,
+          "sample_type": "tumor",
+          "sequence_type": "dna",
+          "filetype": "redux_ms_tsv",
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)alignments/dna/\(.inputs.tumor_dna_sample_id).ms_table.tsv.gz"
+        },
+        {
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
+          "subject_id": .inputs.subject_id,
           "sample_id": .inputs.normal_dna_sample_id,
           "sample_type": "normal",
           "sequence_type": "dna",
           "filetype": "bam_redux",
           "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)alignments/dna/\(.inputs.normal_dna_sample_id).redux.bam"
+        },
+        {
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
+          "subject_id": .inputs.subject_id,
+          "sample_id": .inputs.normal_dna_sample_id,
+          "sample_type": "normal",
+          "sequence_type": "dna",
+          "filetype": "redux_jitter_tsv",
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)alignments/dna/\(.inputs.normal_dna_sample_id).jitter_params.tsv"
+        },
+        {
+          "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
+          "subject_id": .inputs.subject_id,
+          "sample_id": .inputs.normal_dna_sample_id,
+          "sample_type": "normal",
+          "sequence_type": "dna",
+          "filetype": "redux_ms_tsv",
+          "filepath": "\(.inputs.dna_oncoanalyser_analysis_uri)alignments/dna/\(.inputs.normal_dna_sample_id).ms_table.tsv.gz"
         },
         {
           "group_id": "\(.inputs.tumor_dna_sample_id)_\(.inputs.normal_dna_sample_id)_\(.inputs.tumor_rna_sample_id)",
