@@ -30,13 +30,13 @@ class Shared {
 
   getOrcabusDataPrefix(): string {
     if (this.envName == 'dev'){
-      return 'byob-icav2/development/'
+      return 'byob-icav2/*/'
     }
     if (this.envName == 'stg'){
-      return 'byob-icav2/staging/'
+      return 'byob-icav2/*/'
     }
     if (this.envName == 'prod'){
-      return 'byob-icav2/production/'
+      return 'byob-icav2/*/'
     }
     throw new Error("Don't know how to handle envName: " + this.envName);
   }
