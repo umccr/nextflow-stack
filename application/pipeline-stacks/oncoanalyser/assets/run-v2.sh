@@ -62,6 +62,7 @@ Usage example: run-v2.sh --manifest-json '{"inputs": {"mode": "wgts"...}, "engin
 
 Options:
   --manifest-json STR           Manifest json
+  --manifest-json-str STR       Manifest json (alternative name)
 
 Documentation:
   Manifest json should look like the following:
@@ -145,14 +146,14 @@ jq_to_csv(){
 get_mode(){
   : '
   Get the mode from the manifest json
-  Note that the "any(" logic requires jq 1.7 or higher
+  Compatible with older jq versions
   '
   jq --raw-output \
    --exit-status \
    --argjson valid_modes_array "$(bash_array_to_jq_list "${VALID_MODES[@]}")" \
     '
       .inputs.mode as $mode |
-      if any($valid_modes_array[] == $mode) then
+      if ($valid_modes_array | map(. == $mode) | any) then
         $mode
       else
         null
@@ -163,13 +164,14 @@ get_mode(){
 get_analysis_type(){
   : '
   Get the analysis type from the manifest json
+  Compatible with older jq versions
   '
   jq --raw-output \
    --exit-status \
    --argjson valid_analysis_types_array "$(bash_array_to_jq_list "${VALID_ANALYSIS_TYPES[@]}")" \
     '
       .inputs.analysis_type as $analysis_type |
-      if any($valid_analysis_types_array[] == $analysis_type) then
+      if ($valid_analysis_types_array | map(. == $analysis_type) | any) then
         $analysis_type
       else
         null
@@ -781,13 +783,14 @@ MANIFEST_JSON=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --manifest-json)
+    --manifest-json|--manifest-json-str)
       MANIFEST_JSON="$2"
       shift 1
     ;;
     -h|--help)
       print_help_text
       exit 0
+    ;;
   esac
   shift
 done

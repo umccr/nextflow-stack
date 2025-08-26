@@ -372,13 +372,24 @@ EOF
 
 samplesheet_wgs_entries() {
   bam_type="${1}"
-  if ! [[ "${bam_type}" =~ ^(bam|bam_markdups)$ ]]; then
+  if ! [[ "${bam_type}" =~ ^(bam|bam_redux)$ ]]; then
     echo "got bad bam type WGS samplesheet entries" 1>&2
     exit 1
   fi
 
-  echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,${bam_type},${input_fps['tumor_wgs_bam']}"
-  echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,${bam_type},${input_fps['normal_wgs_bam']}"
+  if [[ "${bam_type}" == "bam_redux" ]]; then
+    # For bam_redux, we need to generate BAM + TSV entries
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,${bam_type},${input_fps['tumor_wgs_bam']}"
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,${bam_type},${input_fps['normal_wgs_bam']}"
+    # Add redux TSV files
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,redux_jitter_tsv,$(dirname "${input_fps['tumor_wgs_bam']}")/${tumor_wgs_sample_id}.jitter_params.tsv"
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,redux_jitter_tsv,$(dirname "${input_fps['normal_wgs_bam']}")/${normal_wgs_sample_id}.jitter_params.tsv"
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,redux_ms_tsv,$(dirname "${input_fps['tumor_wgs_bam']}")/${tumor_wgs_sample_id}.ms_table.tsv.gz"
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,redux_ms_tsv,$(dirname "${input_fps['normal_wgs_bam']}")/${normal_wgs_sample_id}.ms_table.tsv.gz"
+  else
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,${bam_type},${input_fps['tumor_wgs_bam']}"
+    echo "${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,${bam_type},${input_fps['normal_wgs_bam']}"
+  fi
 }
 
 samplesheet_wts_entries() {
@@ -490,7 +501,7 @@ EOF
 if [[ ${mode} == 'wgs' ]]; then
 
   cat <<EOF >> samplesheet.csv
-$(samplesheet_wgs_entries bam)
+$(samplesheet_wgs_entries bam_redux)
 EOF
 
 elif [[ ${mode} == 'wts' ]]; then
@@ -502,14 +513,14 @@ EOF
 elif [[ ${mode} == 'wgts' ]]; then
 
   cat <<EOF >> samplesheet.csv
-$(samplesheet_wgs_entries bam)
+$(samplesheet_wgs_entries bam_redux)
 $(samplesheet_wts_entries "${tumor_wgs_sample_id}")
 EOF
 
 elif [[ ${mode} == 'wgts_existing_wts' ]]; then
 
   cat <<EOF >> samplesheet.csv
-$(samplesheet_wgs_entries bam)
+$(samplesheet_wgs_entries bam_redux)
 $(samplesheet_wts_entries "${tumor_wgs_sample_id}")
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wts_sample_id},tumor,rna,isofox_dir,${existing_wts_dir}/isofox/
 EOF
@@ -517,12 +528,10 @@ EOF
 elif [[ ${mode} == 'wgts_existing_wgs' ]]; then
 
   cat <<EOF >> samplesheet.csv
-$(samplesheet_wgs_entries bam_markdups)
+$(samplesheet_wgs_entries bam_redux)
 $(samplesheet_wts_entries "${tumor_wgs_sample_id}")
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,bamtools,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}.wgsmetrics
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,bamtools,${existing_wgs_dir}/bamtools/${normal_wgs_sample_id}.wgsmetrics
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,flagstat,${existing_wgs_dir}/flagstats/${tumor_wgs_sample_id}.flagstat
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,flagstat,${existing_wgs_dir}/flagstats/${normal_wgs_sample_id}.flagstat
+${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,bamtools_dir,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}_${normal_wgs_sample_id}_${tumor_wgs_sample_id}_bamtools/
+${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,bamtools_dir,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}_${normal_wgs_sample_id}_${normal_wgs_sample_id}_bamtools/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,sage_dir,${existing_wgs_dir}/sage/somatic/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,sage_dir,${existing_wgs_dir}/sage/germline/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,linx_anno_dir,${existing_wgs_dir}/linx/somatic_annotations/
@@ -537,12 +546,10 @@ EOF
 elif [[ ${mode} == 'wgts_existing_both' ]]; then
 
   cat <<EOF >> samplesheet.csv
-$(samplesheet_wgs_entries bam_markdups)
+$(samplesheet_wgs_entries bam_redux)
 $(samplesheet_wts_entries "${tumor_wgs_sample_id}")
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,bamtools,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}.wgsmetrics
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,bamtools,${existing_wgs_dir}/bamtools/${normal_wgs_sample_id}.wgsmetrics
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,flagstat,${existing_wgs_dir}/flagstats/${tumor_wgs_sample_id}.flagstat
-${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,flagstat,${existing_wgs_dir}/flagstats/${normal_wgs_sample_id}.flagstat
+${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,bamtools_dir,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}_${normal_wgs_sample_id}_${tumor_wgs_sample_id}_bamtools/
+${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,bamtools_dir,${existing_wgs_dir}/bamtools/${tumor_wgs_sample_id}_${normal_wgs_sample_id}_${normal_wgs_sample_id}_bamtools/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,sage_dir,${existing_wgs_dir}/sage/somatic/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${normal_wgs_sample_id},normal,dna,sage_dir,${existing_wgs_dir}/sage/germline/
 ${subject_id}_${tumor_wgs_sample_id},${subject_id},${tumor_wgs_sample_id},tumor,dna,linx_anno_dir,${existing_wgs_dir}/linx/somatic_annotations/
