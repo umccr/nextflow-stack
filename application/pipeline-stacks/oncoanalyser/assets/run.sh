@@ -390,8 +390,9 @@ upload_data() {
   aws s3 sync \
     --no-progress \
     --no-follow-symlinks \
-    --exclude='software/*' \
+    --exclude='.nextflow/*' \
     --exclude='assets/*' \
+    --exclude='software/*' \
     --exclude='work/*' \
     ./ "${output_results_dir}/"
 }
